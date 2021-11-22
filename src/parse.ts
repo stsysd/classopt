@@ -38,14 +38,13 @@ export function parse<T extends object>(target: T, argv: string[]): T {
   const argQ = new Queue(meta.args ?? []);
 
   while (!q.empty()) {
-    const first = q.peek();
-    if (first.startsWith("-") && first.length > 1) {
-      const first = q.pop();
-      const desc = meta.optMap.get(first);
+    if (q.peek().startsWith("-") && q.peek().length > 1) {
+      const key = q.pop();
+      const desc = meta.optMap.get(key);
       if (!desc) {
-        throw new errors.UnknownOptKey(first);
+        throw new errors.UnknownOptKey(key);
       }
-      const val = consume(desc.type, q, first);
+      const val = consume(desc.type, q, key);
       // deno-lint-ignore no-explicit-any
       (target as any)[desc.prop] = val;
       for (const key of [desc.short, desc.long]) {
