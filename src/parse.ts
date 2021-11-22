@@ -29,10 +29,20 @@ function consume(typ: OptTypeName, q: Queue<string>, key: string): OptType {
   throw "unreachable";
 }
 
+function normalizeArgs(argv: string[]): string[] {
+  const combinedPattern = /-[a-zA-Z0-9$]{2,}/;
+  return argv.flatMap((arg) => {
+    if (combinedPattern.test(arg)) {
+      return [...arg.slice(1)].map((c) => `-${c}`);
+    }
+    return [arg];
+  });
+}
+
 // deno-lint-ignore ban-types
 export function parse<T extends object>(target: T, argv: string[]): T {
   initialize(target);
-  const q = new Queue(argv);
+  const q = new Queue(normalizeArgs(argv));
   const meta = metadata(target);
   const keys = new Set();
   const argQ = new Queue(meta.args ?? []);

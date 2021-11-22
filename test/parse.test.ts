@@ -119,6 +119,39 @@ Deno.test("option key conversion", async (suite) => {
   );
 });
 
+Deno.test("combined keys", async (suite) => {
+  class Option {
+    @Opt({ short: "f" })
+    foo = false;
+
+    @Opt({ short: "b" })
+    bar = false;
+
+    @Opt({ short: "z" })
+    baz = false;
+
+    @Opt({ short: "q", type: "string" })
+    qux = "";
+  }
+
+  await suite.step("flag only", () =>
+    assertObjectMatch(parse(new Option(), ["-fz"]), {
+      foo: true,
+      bar: false,
+      baz: true,
+    })
+  );
+
+  await suite.step("with argment", () =>
+    assertObjectMatch(parse(new Option(), ["-bq", "QUX"]), {
+      foo: false,
+      bar: true,
+      baz: false,
+      qux: "QUX"
+    })
+  );
+});
+
 Deno.test("subcommand", async (suite) => {
   class Foo {
     type = "foo";
