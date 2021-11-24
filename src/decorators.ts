@@ -90,25 +90,20 @@ export function Rest(
   };
 }
 
-type Common<
-  Args extends unknown[],
-  U extends Args[number] = Args[number],
-  K extends keyof U = keyof U
-> = { [key in K]: U[key] };
+// deno-lint-ignore ban-types
+type Instance<Args extends Constructor<object>[]> = {
+  [Ix in keyof Args]: Args[Ix] extends Constructor<infer T> ? T : never;
+}[number];
 
 // deno-lint-ignore ban-types
 export function Cmd<Args extends Constructor<object>[]>(
-  ...cmds: Args
-): <K extends string>(
-  target: {
-    [key in K]?: Common<{
-      [Ix in keyof Args]: Args[Ix] extends Constructor<infer T> ? T : never;
-    }>;
-  },
-  prop: K
+  ...args: Args
+): <P extends string>(
+  target: { [key in P]?: Partial<Instance<Args>> },
+  prop: P
 ) => void {
   return (target, prop) => {
-    for (const command of cmds) {
+    for (const command of args) {
       pushCmd(target, { prop, command });
     }
   };
