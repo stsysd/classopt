@@ -14,7 +14,7 @@ function handleParseError(e: unknown, cmd: Command): void {
 }
 
 export abstract class Command {
-  abstract execute(): Promise<void> | void;
+  abstract execute(): Promise<void>;
 
   help(): string {
     return help(this);
