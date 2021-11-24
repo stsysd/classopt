@@ -147,7 +147,7 @@ Deno.test("combined keys", async (suite) => {
       foo: false,
       bar: true,
       baz: false,
-      qux: "QUX"
+      qux: "QUX",
     })
   );
 });
