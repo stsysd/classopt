@@ -115,7 +115,7 @@ Deno.test("option key conversion", async (suite) => {
   );
 
   await suite.step("disable long otpion", () =>
-    assertThrows(() => parse(new Option(), ["-foo", "FOO"]))
+    assertThrows(() => parse(new Option(), ["--foo", "FOO"]))
   );
 });
 

@@ -30,7 +30,7 @@ function consume(typ: OptTypeName, q: Queue<string>, key: string): OptType {
 }
 
 function normalizeArgs(argv: string[]): string[] {
-  const combinedPattern = /-[a-zA-Z0-9$]{2,}/;
+  const combinedPattern = /^-[a-zA-Z0-9$]{2,}$/;
   return argv.flatMap((arg) => {
     if (combinedPattern.test(arg)) {
       return [...arg.slice(1)].map((c) => `-${c}`);
