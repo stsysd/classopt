@@ -13,8 +13,8 @@ function handleParseError(e: unknown, cmd: Command): void {
   }
 }
 
-export abstract class Command {
-  abstract execute(): Promise<void>;
+export abstract class Command<Context = void> {
+  abstract execute(ctxt: Context): Promise<void>;
 
   help(): string {
     return help(this);
@@ -41,8 +41,8 @@ export abstract class Command {
 const HELP_FLAG = Symbol("help-flag");
 export function Help(
   about: string
-): <T extends Command>(target: Constructor<T>) => void {
-  return <T extends Command>(target: Constructor<T>) => {
+): <T extends Command<unknown>>(target: Constructor<T>) => void {
+  return <T extends Command<unknown>>(target: Constructor<T>) => {
     setHelp(target, about);
     pushOpt(target.prototype, {
       about: "Prints help information",
@@ -53,12 +53,12 @@ export function Help(
       $stopEarly: true,
     });
     const execute = target.prototype.execute;
-    target.prototype.execute = function (this: T) {
+    target.prototype.execute = function (this: T, ...args: unknown[]) {
       if (Reflect.has(this, HELP_FLAG)) {
         console.log(this.help());
         return;
       }
-      return execute.call(this);
+      return execute.call(this, ...args);
     };
   };
 }
@@ -66,8 +66,8 @@ export function Help(
 const VERSION_FLAG = Symbol("version-flag");
 export function Version(
   ver: string
-): <T extends Command>(target: Constructor<T>) => void {
-  return <T extends Command>(target: Constructor<T>) => {
+): <T extends Command<unknown>>(target: Constructor<T>) => void {
+  return <T extends Command<unknown>>(target: Constructor<T>) => {
     pushOpt(target.prototype, {
       about: "Prints version information",
       prop: VERSION_FLAG,
@@ -77,13 +77,13 @@ export function Version(
       $stopEarly: true,
     });
     const execute = target.prototype.execute;
-    target.prototype.execute = function (this: T) {
+    target.prototype.execute = function (this: T, ...args: unknown[]) {
       if (Reflect.has(this, VERSION_FLAG)) {
         const name = getName(target);
         console.log(`${name} ${ver}`);
         return;
       }
-      return execute.call(this);
+      return execute.call(this, ...args);
     };
   };
 }

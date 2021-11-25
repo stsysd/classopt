@@ -9,6 +9,7 @@ Deno.test("simple command", () => {
 
     execute() {
       val = this.arg;
+      return Promise.resolve();
     }
   }
 
@@ -22,12 +23,14 @@ Deno.test("subcommands", async (suite) => {
   class Foo extends Command {
     execute() {
       val = "foo";
+      return Promise.resolve();
     }
   }
 
   class Bar extends Command {
     execute() {
       val = "bar";
+      return Promise.resolve();
     }
   }
 
@@ -35,8 +38,8 @@ Deno.test("subcommands", async (suite) => {
     @Cmd(Foo, Bar)
     command?: Command;
 
-    execute() {
-      this.command?.execute();
+    async execute() {
+      await this.command?.execute();
     }
   }
 
