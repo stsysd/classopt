@@ -152,6 +152,34 @@ Deno.test("combined keys", async (suite) => {
   );
 });
 
+Deno.test("multiple key", () => {
+  class Option {
+    @Opt({ multiple: true })
+    foo = [];
+
+    @Opt({ multiple: true, type: "string" })
+    bar!: string[];
+  }
+
+  assertObjectMatch(parse(new Option(), []), {
+    foo: [],
+    bar: [],
+  });
+
+  assertObjectMatch(parse(new Option(), ["-fff"]), {
+    foo: [true, true, true],
+    bar: [],
+  });
+
+  assertObjectMatch(
+    parse(new Option(), ["-b", "one", "-b", "two", "-b", "three"]),
+    {
+      foo: [],
+      bar: ["one", "two", "three"],
+    }
+  );
+});
+
 Deno.test("subcommand", async (suite) => {
   class Foo {
     type = "foo";

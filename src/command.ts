@@ -50,6 +50,7 @@ export function Help(
       long: "--help",
       short: "-h",
       type: "boolean",
+      multiple: false,
       $stopEarly: true,
     });
     const execute = target.prototype.execute;
@@ -74,6 +75,7 @@ export function Version(
       long: "--version",
       short: "-V",
       type: "boolean",
+      multiple: false,
       $stopEarly: true,
     });
     const execute = target.prototype.execute;

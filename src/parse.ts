@@ -55,14 +55,21 @@ export function parse<T extends object>(target: T, argv: string[]): T {
         throw new errors.UnknownOptKey(key);
       }
       const val = consume(desc.type, q, key);
-      // deno-lint-ignore no-explicit-any
-      (target as any)[desc.prop] = val;
-      for (const key of [desc.short, desc.long]) {
-        if (key === "") continue;
-        if (keys.has(key)) {
-          throw new errors.DuplicateOptValue(key);
+      if (desc.multiple) {
+        // deno-lint-ignore no-explicit-any
+        (target as any)[desc.prop].push(val);
+      } else {
+        // deno-lint-ignore no-explicit-any
+        (target as any)[desc.prop] = val;
+      }
+      if (!desc.multiple) {
+        for (const key of [desc.short, desc.long]) {
+          if (key === "") continue;
+          if (keys.has(key)) {
+            throw new errors.DuplicateOptValue(key);
+          }
+          keys.add(key);
         }
-        keys.add(key);
       }
       if (desc.$stopEarly) return target;
     } else if (!argQ.empty()) {

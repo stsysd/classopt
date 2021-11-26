@@ -8,14 +8,34 @@ import {
   setName,
 } from "./meta.ts";
 
+export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(opts?: {
+  about?: string;
+  type?: N;
+  long?: string | false;
+  short?: string | false;
+  multiple?: false;
+}): <K extends string | symbol>(target: { [key in K]?: V }, prop: K) => void;
+
+export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(opts?: {
+  about?: string;
+  type?: N;
+  long?: string | false;
+  short?: string | false;
+  multiple: true;
+}): <K extends string | symbol>(target: { [key in K]?: V[] }, prop: K) => void;
+
 export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(
   opts: {
     about?: string;
     type?: N;
     long?: string | false;
     short?: string | false;
+    multiple?: boolean;
   } = {}
-): <K extends string | symbol>(target: { [key in K]?: V }, prop: K) => void {
+): <K extends string | symbol>(
+  target: { [key in K]?: V } | { [key in K]?: V[] },
+  prop: K
+) => void {
   return (target, prop) => {
     const keys = { long: "", short: "" };
     if (typeof prop === "string") {
@@ -47,6 +67,7 @@ export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(
       about: "",
       prop,
       type: "boolean",
+      multiple: !!opts.multiple,
       $stopEarly: false,
       ...keys,
       ...rest,

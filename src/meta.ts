@@ -17,6 +17,7 @@ export type OptDescriptor<N extends OptTypeName = OptTypeName> = {
   long: string;
   short: string;
   type: N;
+  multiple: boolean;
   $stopEarly: boolean;
 };
 
@@ -124,6 +125,15 @@ export function pushOpt(target: object, desc: OptDescriptor) {
       throw new errors.DuplicateOptKey(target, desc.prop, desc.long);
     }
     meta.optMap.set(desc.long, desc);
+  }
+
+  if (desc.multiple) {
+    meta.inits.push({
+      prop: desc.prop,
+      init() {
+        return [];
+      },
+    });
   }
 }
 
