@@ -93,7 +93,7 @@ export function parse<T extends object>(target: T, argv: string[]): T {
       (target as any)[desc.prop] = cmd;
       return target;
     } else {
-      throw new errors.InternalError("malformed metadata");
+      throw new errors.TooManyArgs();
     }
   }
   if (argQ != null && !argQ.empty() && argQ.peek().kind === "required") {
