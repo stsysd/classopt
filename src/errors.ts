@@ -1,15 +1,6 @@
-export class DefinitionError extends Error {}
-
-export class ParseError extends Error {
-  public readonly exitCode: number;
-
-  constructor(msg: string, exitCode: number = 1) {
-    super(msg);
-    this.exitCode = exitCode;
-  }
-}
-
 export class InternalError extends Error {}
+
+export class DefinitionError extends Error {}
 
 export class InvalidOptKey extends DefinitionError {
   // deno-lint-ignore ban-types
@@ -67,44 +58,67 @@ export class DefineBothArgAndCmd extends DefinitionError {
   }
 }
 
+export class ParseError extends Error {
+  // deno-lint-ignore ban-types
+  public readonly target: object;
+  public readonly exitCode: number;
+
+  // deno-lint-ignore ban-types
+  constructor(msg: string, target: object, exitCode: number = 1) {
+    super(msg);
+    this.target = target;
+    this.exitCode = exitCode;
+  }
+}
+
 export class DuplicateOptValue extends ParseError {
-  constructor(key: string) {
-    super(`Option with "${key}" specified mutilple time`);
+  // deno-lint-ignore ban-types
+  constructor(key: string, target: object) {
+    super(`Option with "${key}" specified mutilple time`, target);
   }
 }
 
 export class UnknownOptKey extends ParseError {
-  constructor(key: string) {
-    super(`Option with "${key}" is not defined`);
+  // deno-lint-ignore ban-types
+  constructor(key: string, target: object) {
+    super(`Option with "${key}" is not defined`, target);
   }
 }
 
 export class UnknownCommandName extends ParseError {
-  constructor(name: string) {
-    super(`Command "${name}" is not defined`);
+  // deno-lint-ignore ban-types
+  constructor(name: string, target: object) {
+    super(`Command "${name}" is not defined`, target);
   }
 }
 
 export class MissingOptArg extends ParseError {
-  constructor(key: string) {
-    super(`Missing argument for option with "${key}"`);
+  // deno-lint-ignore ban-types
+  constructor(key: string, target: object) {
+    super(`Missing argument for option with "${key}"`, target);
   }
 }
 
 export class MissingArgs extends ParseError {
-  constructor(...names: string[]) {
-    super(`Missing argments: ${names.map((name) => `<${name}>`).join(" ")}`);
+  // deno-lint-ignore ban-types
+  constructor(names: string[], target: object) {
+    super(
+      `Missing argments: ${names.map((name) => `<${name}>`).join(" ")}`,
+      target
+    );
   }
 }
 
 export class TooManyArgs extends ParseError {
-  constructor() {
-    super("Too many arguments");
+  // deno-lint-ignore ban-types
+  constructor(target: object) {
+    super("Too many arguments", target);
   }
 }
 
 export class MalformedArg extends ParseError {
-  constructor(typ: string, arg: string) {
-    super(`Argument "${arg}" cannot be parsed into ${typ}`);
+  // deno-lint-ignore ban-types
+  constructor(typ: string, arg: string, target: object) {
+    super(`Argument "${arg}" cannot be parsed into ${typ}`, target);
   }
 }

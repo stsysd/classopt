@@ -4,10 +4,10 @@ import { setHelp, getName, pushOpt } from "./meta.ts";
 import { parse } from "./parse.ts";
 import { help } from "./help.ts";
 
-function handleParseError(e: unknown, cmd: Command): void {
+function handleParseError(e: unknown): void {
   if (e instanceof errors.ParseError) {
     console.error(`error: ${e.message}`);
-    console.log(cmd.help());
+    console.log(help(e.target));
   } else {
     throw e;
   }
@@ -32,7 +32,7 @@ export abstract class Command<Context = void> {
     try {
       await cmd.parse(args).execute();
     } catch (e) {
-      handleParseError(e, cmd);
+      handleParseError(e);
     }
     return cmd;
   }

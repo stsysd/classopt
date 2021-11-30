@@ -2,12 +2,18 @@ import * as errors from "./errors.ts";
 import { Queue } from "./utils.ts";
 import { metadata, initialize, OptTypeName, OptType } from "./meta.ts";
 
-function consume(typ: OptTypeName, q: Queue<string>, key: string): OptType {
+function consume(
+  // deno-lint-ignore ban-types
+  target: object,
+  typ: OptTypeName,
+  q: Queue<string>,
+  key: string
+): OptType {
   if (typ === "boolean") {
     return true;
   }
   if (q.empty()) {
-    throw new errors.MissingOptArg(key);
+    throw new errors.MissingOptArg(key, target);
   }
   const arg = q.pop();
   if (typ === "string") {
@@ -15,14 +21,14 @@ function consume(typ: OptTypeName, q: Queue<string>, key: string): OptType {
   } else if (typ === "integer") {
     const i = parseInt(arg);
     if (Number.isNaN(i)) {
-      throw new errors.MalformedArg(typ, arg);
+      throw new errors.MalformedArg(typ, arg, target);
     }
     return BigInt(i);
   }
   if (typ === "number") {
     const n = parseFloat(arg);
     if (Number.isNaN(n)) {
-      throw new errors.MalformedArg(typ, arg);
+      throw new errors.MalformedArg(typ, arg, target);
     }
     return n;
   }
@@ -52,9 +58,9 @@ export function parse<T extends object>(target: T, argv: string[]): T {
       const key = q.pop();
       const desc = meta.optMap.get(key);
       if (!desc) {
-        throw new errors.UnknownOptKey(key);
+        throw new errors.UnknownOptKey(key, target);
       }
-      const val = consume(desc.type, q, key);
+      const val = consume(target, desc.type, q, key);
       if (desc.multiple) {
         // deno-lint-ignore no-explicit-any
         (target as any)[desc.prop].push(val);
@@ -66,7 +72,7 @@ export function parse<T extends object>(target: T, argv: string[]): T {
         for (const key of [desc.short, desc.long]) {
           if (key === "") continue;
           if (keys.has(key)) {
-            throw new errors.DuplicateOptValue(key);
+            throw new errors.DuplicateOptValue(key, target);
           }
           keys.add(key);
         }
@@ -86,14 +92,14 @@ export function parse<T extends object>(target: T, argv: string[]): T {
       const [key, ...args] = q.rest();
       const desc = meta.cmdMap.get(key);
       if (desc == null) {
-        throw new errors.UnknownCommandName(key);
+        throw new errors.UnknownCommandName(key, target);
       }
       const cmd = parse(new desc.command(), args);
       // deno-lint-ignore no-explicit-any
       (target as any)[desc.prop] = cmd;
       return target;
     } else {
-      throw new errors.TooManyArgs();
+      throw new errors.TooManyArgs(target);
     }
   }
   if (argQ != null && !argQ.empty() && argQ.peek().kind === "required") {
@@ -101,7 +107,7 @@ export function parse<T extends object>(target: T, argv: string[]): T {
       .rest()
       .filter((desc) => desc.kind === "required")
       .map((desc) => desc.name);
-    throw new errors.MissingArgs(...names);
+    throw new errors.MissingArgs(names, target);
   }
   return target;
 }
