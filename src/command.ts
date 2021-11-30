@@ -3,11 +3,13 @@ import { Constructor } from "./utils.ts";
 import { setHelp, getName, pushOpt } from "./meta.ts";
 import { parse } from "./parse.ts";
 import { help } from "./help.ts";
+import { red } from "../deps.ts";
 
 function handleParseError(e: unknown): void {
   if (e instanceof errors.ParseError) {
-    console.error(`error: ${e.message}`);
-    console.log(help(e.target));
+    console.error(red(`error: ${e.message}`));
+    console.error();
+    console.error(help(e.target));
   } else {
     throw e;
   }
