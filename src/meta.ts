@@ -1,24 +1,18 @@
 import * as errors from "./errors.ts";
 import { Constructor, kebabify } from "./utils.ts";
 
-type OptTypeMap = {
-  boolean: boolean;
-  string: string;
-  integer: bigint;
-  number: number;
-};
+export type Either<T> = [error: string | null, result?: T];
+export type Decoder<T> = (arg: string) => Either<T>;
 
-export type OptTypeName = keyof OptTypeMap;
-export type OptType<N extends OptTypeName = OptTypeName> = OptTypeMap[N];
-
-export type OptDescriptor<N extends OptTypeName = OptTypeName> = {
+export type OptDescriptor = {
   about: string;
   prop: string | symbol;
   long: string;
   short: string;
-  type: N;
   multiple: boolean;
   $stopEarly: boolean;
+  type: string;
+  decoder?: Decoder<unknown>;
 };
 
 export type ArgDescriptor = {
@@ -26,6 +20,8 @@ export type ArgDescriptor = {
   name: string;
   prop: string | symbol;
   kind: "required" | "optional" | "rest";
+  type: string;
+  decoder: Decoder<unknown>;
 };
 
 export type CommandDescriptor = {

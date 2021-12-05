@@ -1,39 +1,94 @@
 import { Constructor, kebabify } from "./utils.ts";
-import {
-  OptTypeName,
-  OptType,
-  pushOpt,
-  pushArg,
-  pushCmd,
-  setName,
-} from "./meta.ts";
+import { pushOpt, pushArg, pushCmd, setName, Either } from "./meta.ts";
 
-export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(opts?: {
+const Decoders = {
+  boolean: undefined,
+  string(arg: string): Either<string> {
+    return [null, arg];
+  },
+  number(arg: string): Either<number> {
+    const n = parseFloat(arg);
+    if (Number.isNaN(n)) {
+      return [`argument '${arg}' is not number`];
+    }
+    return [null, n];
+  },
+} as const;
+
+type DecodeTypeMap = {
+  string: string;
+  number: number;
+};
+
+export function Opt<Mul extends boolean = false>(opts?: {
+  type?: "boolean";
   about?: string;
-  type?: N;
   long?: string | false;
   short?: string | false;
-  multiple?: false;
-}): <K extends string | symbol>(target: { [key in K]?: V }, prop: K) => void;
+  multiple?: Mul;
+}): <K extends string | symbol>(
+  target: { [key in K]?: Mul extends true ? boolean[] : boolean },
+  prop: K
+) => void;
 
-export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(opts?: {
+export function Opt<
+  N extends keyof DecodeTypeMap,
+  Mul extends boolean = false
+>(opts?: {
+  type: N;
   about?: string;
-  type?: N;
   long?: string | false;
   short?: string | false;
-  multiple: true;
-}): <K extends string | symbol>(target: { [key in K]?: V[] }, prop: K) => void;
+  multiple?: Mul;
+}): <K extends string | symbol>(
+  target: {
+    [key in K]?: Mul extends true ? DecodeTypeMap[N][] : DecodeTypeMap[N];
+  },
+  prop: K
+) => void;
 
-export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(
+export function Opt<T, Mul extends boolean = false>(opts: {
+  type: (arg: string) => Either<T>;
+  about?: string;
+  long?: string | false;
+  short?: string | false;
+  multiple?: Mul;
+}): <K extends string | symbol>(
+  target: { [key in K]?: Mul extends true ? T[] : T },
+  prop: K
+) => void;
+
+export function Opt<T, Mul extends boolean = false>(opts: {
+  type: {
+    decode: (arg: string) => Either<T>;
+    name: string;
+  };
+  about?: string;
+  long?: string | false;
+  short?: string | false;
+  multiple?: Mul;
+}): <K extends string | symbol>(
+  target: { [key in K]?: Mul extends true ? T[] : T },
+  prop: K
+) => void;
+
+export function Opt(
   opts: {
+    type?:
+      | "boolean"
+      | keyof DecodeTypeMap
+      | ((arg: string) => Either<unknown>)
+      | {
+          name: string;
+          decode: (arg: string) => Either<unknown>;
+        };
     about?: string;
-    type?: N;
     long?: string | false;
     short?: string | false;
     multiple?: boolean;
   } = {}
 ): <K extends string | symbol>(
-  target: { [key in K]?: V } | { [key in K]?: V[] },
+  target: { [key in K]?: unknown | unknown[] },
   prop: K
 ) => void {
   return (target, prop) => {
@@ -47,7 +102,7 @@ export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(
       }
     }
 
-    const { long, short, ...rest } = opts;
+    const { long, short, type, ...rest } = opts;
     if (long) {
       keys.long = long;
     } else if (long != null) {
@@ -63,25 +118,41 @@ export function Opt<N extends OptTypeName = "boolean", V = OptType<N>>(
     keys.short = keys.short && `-${keys.short}`;
     keys.long = keys.long && `--${keys.long}`;
 
+    let decoder = undefined;
+    let typeName = "input";
+
+    if (typeof type === "string" && type in Decoders) {
+      decoder = Decoders[type];
+      typeName = type;
+    } else if (typeof type === "function") {
+      decoder = type;
+    } else if (type == null) {
+      typeName = "boolean";
+    } else if (typeof type === "object") {
+      decoder = type.decode;
+      typeName = type.name;
+    }
+
     pushOpt(target, {
       about: "",
       prop,
-      type: "boolean",
       multiple: !!opts.multiple,
       $stopEarly: false,
+      type: typeName,
+      decoder,
       ...keys,
       ...rest,
     });
   };
 }
 
-export function Arg(
+export function Arg<T = string>(
   opts: {
     name?: string;
     about?: string;
     optional?: boolean;
   } = {}
-): <K extends string>(target: { [key in K]: string }, prop: K) => void {
+): <K extends string>(target: { [key in K]: T }, prop: K) => void {
   return (target, prop) => {
     const { optional, ...rest } = opts;
     pushArg(target, {
@@ -89,23 +160,31 @@ export function Arg(
       about: "",
       prop,
       kind: optional ? "optional" : "required",
+      type: "string",
+      decoder: (s) => [null, s],
       ...rest,
     });
   };
 }
 
-export function Rest(
+export function Rest<N extends keyof DecodeTypeMap = "string">(
   opts: {
     name?: string;
     about?: string;
+    type?: N;
   } = {}
-): <K extends string>(target: { [key in K]: string[] }, prop: K) => void {
+): <K extends string>(
+  target: { [key in K]: DecodeTypeMap[N][] },
+  prop: K
+) => void {
   return (target, prop) => {
     pushArg(target, {
       name: kebabify(prop),
       about: "",
       prop,
       kind: "rest",
+      type: "string",
+      decoder: (s) => [null, s],
       ...opts,
     });
   };

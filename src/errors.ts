@@ -116,9 +116,9 @@ export class TooManyArgs extends ParseError {
   }
 }
 
-export class MalformedArg extends ParseError {
+export class InvalidArg extends ParseError {
   // deno-lint-ignore ban-types
-  constructor(typ: string, arg: string, target: object) {
-    super(`Argument "${arg}" cannot be parsed into ${typ}`, target);
+  constructor(msg: string, target: object) {
+    super(msg, target);
   }
 }

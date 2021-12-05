@@ -1,39 +1,6 @@
 import * as errors from "./errors.ts";
 import { Queue } from "./utils.ts";
-import { metadata, initialize, OptTypeName, OptType } from "./meta.ts";
-
-function consume(
-  // deno-lint-ignore ban-types
-  target: object,
-  typ: OptTypeName,
-  q: Queue<string>,
-  key: string
-): OptType {
-  if (typ === "boolean") {
-    return true;
-  }
-  if (q.empty()) {
-    throw new errors.MissingOptArg(key, target);
-  }
-  const arg = q.pop();
-  if (typ === "string") {
-    return arg;
-  } else if (typ === "integer") {
-    const i = parseInt(arg);
-    if (Number.isNaN(i)) {
-      throw new errors.MalformedArg(typ, arg, target);
-    }
-    return BigInt(i);
-  }
-  if (typ === "number") {
-    const n = parseFloat(arg);
-    if (Number.isNaN(n)) {
-      throw new errors.MalformedArg(typ, arg, target);
-    }
-    return n;
-  }
-  throw "unreachable";
-}
+import { metadata, initialize } from "./meta.ts";
 
 function normalizeArgs(argv: string[]): string[] {
   const combinedPattern = /^-[a-zA-Z0-9$]{2,}$/;
@@ -60,7 +27,21 @@ export function parse<T extends object>(target: T, argv: string[]): T {
       if (!desc) {
         throw new errors.UnknownOptKey(key, target);
       }
-      const val = consume(target, desc.type, q, key);
+
+      let val: unknown;
+      if (desc.decoder) {
+        if (q.empty()) {
+          throw new errors.MissingOptArg(key, target);
+        }
+        const [err, ret] = desc.decoder(q.pop());
+        if (err != null) {
+          throw new errors.InvalidArg(err, target);
+        }
+        val = ret;
+      } else {
+        val = true;
+      }
+
       if (desc.multiple) {
         // deno-lint-ignore no-explicit-any
         (target as any)[desc.prop].push(val);
@@ -68,6 +49,7 @@ export function parse<T extends object>(target: T, argv: string[]): T {
         // deno-lint-ignore no-explicit-any
         (target as any)[desc.prop] = val;
       }
+
       if (!desc.multiple) {
         for (const key of [desc.short, desc.long]) {
           if (key === "") continue;
@@ -82,11 +64,21 @@ export function parse<T extends object>(target: T, argv: string[]): T {
       const desc = argQ.pop();
       const { prop } = desc;
       if (desc.kind != "rest") {
+        const [err, val] = desc.decoder(q.pop());
+        if (err) {
+          throw new errors.InvalidArg(err, target);
+        }
         // deno-lint-ignore no-explicit-any
-        (target as any)[prop] = q.pop();
+        (target as any)[prop] = val;
       } else {
         // deno-lint-ignore no-explicit-any
-        (target as any)[prop] = q.rest();
+        (target as any)[prop] = q.rest().map((s) => {
+          const [err, val] = desc.decoder(s);
+          if (err) {
+            throw new errors.InvalidArg(err, target);
+          }
+          return val;
+        });
       }
     } else if (meta.cmds != null && meta.cmdMap != null) {
       const [key, ...args] = q.rest();

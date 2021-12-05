@@ -7,16 +7,13 @@ import { permutations } from "https://deno.land/std@0.114.0/collections/permutat
 
 Deno.test("parse options", async (suite: Deno.TestContext) => {
   class Option {
-    @Opt({ short: "s", type: "string" })
+    @Opt({ type: "string", short: "s" })
     str = "default";
-
-    @Opt({ type: "integer" })
-    int = 0n;
 
     @Opt({ type: "number" })
     num = 0;
 
-    @Opt({ type: "boolean" })
+    @Opt()
     bool = false;
 
     @Arg()
@@ -26,7 +23,6 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
   await suite.step("no option", () =>
     assertObjectMatch(parse(new Option(), ["INPUT"]), {
       str: "default",
-      int: 0n,
       num: 0,
       bool: false,
       input: "INPUT",
@@ -34,10 +30,9 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
   );
 
   await suite.step("permutations", async (sub) => {
-    const base = ["--str string", "--int 42", "--num 3.14", "--bool", "INPUT"];
+    const base = ["--str string", "--num 3.14", "--bool", "INPUT"];
     const exp = {
       str: "string",
-      int: 42n,
       num: 3.14,
       bool: true,
       input: "INPUT",
@@ -130,7 +125,7 @@ Deno.test("combined keys", async (suite) => {
     @Opt({ short: "z" })
     baz = false;
 
-    @Opt({ short: "q", type: "string" })
+    @Opt({ type: "string", short: "q" })
     qux = "";
   }
 
@@ -157,7 +152,7 @@ Deno.test("multiple key", () => {
     @Opt({ multiple: true })
     foo = [];
 
-    @Opt({ multiple: true, type: "string" })
+    @Opt({ type: "string", multiple: true })
     bar!: string[];
   }
 

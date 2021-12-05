@@ -48,10 +48,10 @@ export function Help(
     setHelp(target, about);
     pushOpt(target.prototype, {
       about: "Prints help information",
+      type: "boolean",
       prop: HELP_FLAG,
       long: "--help",
       short: "-h",
-      type: "boolean",
       multiple: false,
       $stopEarly: true,
     });
@@ -73,10 +73,10 @@ export function Version(
   return <T extends Command<unknown>>(target: Constructor<T>) => {
     pushOpt(target.prototype, {
       about: "Prints version information",
+      type: "boolean",
       prop: VERSION_FLAG,
       long: "--version",
       short: "-V",
-      type: "boolean",
       multiple: false,
       $stopEarly: true,
     });
