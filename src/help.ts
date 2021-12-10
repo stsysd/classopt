@@ -1,13 +1,13 @@
 import * as errors from "./errors.ts";
-import { indentation, textTable, buildText, TextBuilder } from "./text.ts";
+import { buildText, indentation, TextBuilder, textTable } from "./text.ts";
 import {
-  metadata,
-  OptDescriptor,
   ArgDescriptor,
   CommandDescriptor,
-  getName,
   getHelp,
+  getName,
   getParent,
+  metadata,
+  OptDescriptor,
 } from "./meta.ts";
 
 function optTable(opts: OptDescriptor[]): TextBuilder {
@@ -104,6 +104,6 @@ export function help<T extends object>(target: T): string {
     indentation(usage),
     optTable(meta.opts),
     meta.cmds && cmdTable(meta.cmds),
-    meta.args && argTable(meta.args)
+    meta.args && argTable(meta.args),
   );
 }

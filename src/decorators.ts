@@ -1,5 +1,5 @@
 import { Constructor, kebabify } from "./utils.ts";
-import { pushOpt, pushArg, pushCmd, setName, Either } from "./meta.ts";
+import { Either, pushArg, pushCmd, pushOpt, setName } from "./meta.ts";
 
 const Decoders = {
   boolean: undefined,
@@ -28,12 +28,12 @@ export function Opt<Mul extends boolean = false>(opts?: {
   multiple?: Mul;
 }): <K extends string | symbol>(
   target: { [key in K]?: Mul extends true ? boolean[] : boolean },
-  prop: K
+  prop: K,
 ) => void;
 
 export function Opt<
   N extends keyof DecodeTypeMap,
-  Mul extends boolean = false
+  Mul extends boolean = false,
 >(opts?: {
   type: N;
   about?: string;
@@ -44,7 +44,7 @@ export function Opt<
   target: {
     [key in K]?: Mul extends true ? DecodeTypeMap[N][] : DecodeTypeMap[N];
   },
-  prop: K
+  prop: K,
 ) => void;
 
 export function Opt<T, Mul extends boolean = false>(opts: {
@@ -55,7 +55,7 @@ export function Opt<T, Mul extends boolean = false>(opts: {
   multiple?: Mul;
 }): <K extends string | symbol>(
   target: { [key in K]?: Mul extends true ? T[] : T },
-  prop: K
+  prop: K,
 ) => void;
 
 export function Opt<T, Mul extends boolean = false>(opts: {
@@ -69,7 +69,7 @@ export function Opt<T, Mul extends boolean = false>(opts: {
   multiple?: Mul;
 }): <K extends string | symbol>(
   target: { [key in K]?: Mul extends true ? T[] : T },
-  prop: K
+  prop: K,
 ) => void;
 
 export function Opt(
@@ -79,17 +79,17 @@ export function Opt(
       | keyof DecodeTypeMap
       | ((arg: string) => Either<unknown>)
       | {
-          name: string;
-          decode: (arg: string) => Either<unknown>;
-        };
+        name: string;
+        decode: (arg: string) => Either<unknown>;
+      };
     about?: string;
     long?: string | false;
     short?: string | false;
     multiple?: boolean;
-  } = {}
+  } = {},
 ): <K extends string | symbol>(
   target: { [key in K]?: unknown | unknown[] },
-  prop: K
+  prop: K,
 ) => void {
   return (target, prop) => {
     const keys = { long: "", short: "" };
@@ -151,7 +151,7 @@ export function Arg<T = string>(
     name?: string;
     about?: string;
     optional?: boolean;
-  } = {}
+  } = {},
 ): <K extends string>(target: { [key in K]: T }, prop: K) => void {
   return (target, prop) => {
     const { optional, ...rest } = opts;
@@ -172,10 +172,10 @@ export function Rest<N extends keyof DecodeTypeMap = "string">(
     name?: string;
     about?: string;
     type?: N;
-  } = {}
+  } = {},
 ): <K extends string>(
   target: { [key in K]: DecodeTypeMap[N][] },
-  prop: K
+  prop: K,
 ) => void {
   return (target, prop) => {
     pushArg(target, {
@@ -200,7 +200,7 @@ export function Cmd<Args extends Constructor<object>[]>(
   ...args: Args
 ): <P extends string>(
   target: { [key in P]?: Partial<Instance<Args>> },
-  prop: P
+  prop: P,
 ) => void {
   return (target, prop) => {
     for (const command of args) {

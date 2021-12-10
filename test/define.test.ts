@@ -1,4 +1,4 @@
-import { Opt, Arg, Rest, Cmd } from "../mod.ts";
+import { Arg, Cmd, Opt, Rest } from "../mod.ts";
 import { assertThrows } from "https://deno.land/std@0.114.0/testing/asserts.ts";
 
 Deno.test("duplicate long key", () =>
@@ -10,8 +10,7 @@ Deno.test("duplicate long key", () =>
       @Opt({ type: "string", long: "foo" })
       bar = "bar";
     }
-  })
-);
+  }));
 
 Deno.test("duplicate short key", () =>
   assertThrows(() => {
@@ -22,8 +21,7 @@ Deno.test("duplicate short key", () =>
       @Opt({ type: "string", short: "f" })
       bar = "foo-bar";
     }
-  })
-);
+  }));
 
 Deno.test("invalid key", () =>
   assertThrows(() => {
@@ -31,8 +29,7 @@ Deno.test("invalid key", () =>
       @Opt({ type: "string" })
       "foo+bar" = "foo";
     }
-  })
-);
+  }));
 
 Deno.test("define required arg after optional args", () =>
   assertThrows(() => {
@@ -43,8 +40,7 @@ Deno.test("define required arg after optional args", () =>
       @Arg({ optional: false })
       required = "";
     }
-  })
-);
+  }));
 
 Deno.test("define rest args after other args", () =>
   assertThrows(() => {
@@ -55,8 +51,7 @@ Deno.test("define rest args after other args", () =>
       @Arg({ optional: true })
       required = "";
     }
-  })
-);
+  }));
 
 Deno.test("define cmd after args", () =>
   assertThrows(() => {
@@ -69,8 +64,7 @@ Deno.test("define cmd after args", () =>
       @Cmd(Sub)
       sub?: Sub;
     }
-  })
-);
+  }));
 
 Deno.test("define arg argments after cmd", () =>
   assertThrows(() => {
@@ -83,5 +77,4 @@ Deno.test("define arg argments after cmd", () =>
       @Cmd(Sub)
       sub?: Sub;
     }
-  })
-);
+  }));

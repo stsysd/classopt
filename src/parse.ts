@@ -1,6 +1,6 @@
 import * as errors from "./errors.ts";
 import { Queue } from "./utils.ts";
-import { metadata, initialize } from "./meta.ts";
+import { initialize, metadata } from "./meta.ts";
 
 function normalizeArgs(argv: string[]): string[] {
   const combinedPattern = /^-[a-zA-Z0-9$]{2,}$/;

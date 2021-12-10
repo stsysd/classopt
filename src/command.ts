@@ -1,6 +1,6 @@
 import * as errors from "./errors.ts";
 import { Constructor } from "./utils.ts";
-import { setHelp, getName, pushOpt } from "./meta.ts";
+import { getName, pushOpt, setHelp } from "./meta.ts";
 import { parse } from "./parse.ts";
 import { help } from "./help.ts";
 import { red } from "../deps.ts";
@@ -28,7 +28,7 @@ export abstract class Command<Context = void> {
 
   static async run<T extends Command, Self extends Constructor<T>>(
     this: Self,
-    args: string[]
+    args: string[],
   ): Promise<T> {
     const cmd = new this();
     try {
@@ -42,7 +42,7 @@ export abstract class Command<Context = void> {
 
 const HELP_FLAG = Symbol("help-flag");
 export function Help(
-  about: string
+  about: string,
 ): <T extends Command<unknown>>(target: Constructor<T>) => void {
   return <T extends Command<unknown>>(target: Constructor<T>) => {
     setHelp(target, about);
@@ -68,7 +68,7 @@ export function Help(
 
 const VERSION_FLAG = Symbol("version-flag");
 export function Version(
-  ver: string
+  ver: string,
 ): <T extends Command<unknown>>(target: Constructor<T>) => void {
   return <T extends Command<unknown>>(target: Constructor<T>) => {
     pushOpt(target.prototype, {

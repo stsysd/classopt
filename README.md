@@ -5,7 +5,7 @@ command line arguments parser for deno based on decorators
 ## basic
 
 ```typescript
-import { Command, Opt, Help, Version, Arg } from "./mod.ts";
+import { Arg, Command, Help, Opt, Version } from "./mod.ts";
 
 @Help("Help Text for Command")
 @Version("0.0.0")
@@ -27,7 +27,6 @@ class Program extends Command {
 }
 
 await Program.run(Deno.args);
-
 ```
 
 ```
@@ -50,14 +49,12 @@ $ deno run -q example.ts -d ststysd pass
 <username> = ststysd
 [password] = pass
 --debug = true
-
 ```
 
 ## subcommand
 
 ```typescript
-
-import { Command, Opt, Cmd, Name, Help, Version, Arg } from "./mod.ts";
+import { Arg, Cmd, Command, Help, Name, Opt, Version } from "./mod.ts";
 
 @Help("Help Text for 'list' Command")
 class List extends Command {

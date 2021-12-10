@@ -1,4 +1,4 @@
-import { Arg, Command, Cmd } from "../mod.ts";
+import { Arg, Cmd, Command } from "../mod.ts";
 import { assertEquals } from "https://deno.land/std@0.114.0/testing/asserts.ts";
 
 Deno.test("simple command", () => {

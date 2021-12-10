@@ -1,4 +1,4 @@
-import { Opt, Arg, Cmd, Name, parse } from "../mod.ts";
+import { Arg, Cmd, Name, Opt, parse } from "../mod.ts";
 import {
   assertObjectMatch,
   assertThrows,
@@ -20,13 +20,15 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
     input = "";
   }
 
-  await suite.step("no option", () =>
-    assertObjectMatch(parse(new Option(), ["INPUT"]), {
-      str: "default",
-      num: 0,
-      bool: false,
-      input: "INPUT",
-    })
+  await suite.step(
+    "no option",
+    () =>
+      assertObjectMatch(parse(new Option(), ["INPUT"]), {
+        str: "default",
+        num: 0,
+        bool: false,
+        input: "INPUT",
+      }),
   );
 
   await suite.step("permutations", async (sub) => {
@@ -39,37 +41,47 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
     };
     for (const p of permutations(base)) {
       const args = p.join(" ").split(" ");
-      await sub.step(args.join(" "), () =>
-        assertObjectMatch(parse(new Option(), args), exp)
+      await sub.step(
+        args.join(" "),
+        () => assertObjectMatch(parse(new Option(), args), exp),
       );
     }
   });
 
-  await suite.step("lack of required arg", () =>
-    assertThrows(() => parse(new Option(), ["--str", "string"]))
+  await suite.step(
+    "lack of required arg",
+    () => assertThrows(() => parse(new Option(), ["--str", "string"])),
   );
-  await suite.step("too many args", () =>
-    assertThrows(() => parse(new Option(), ["foo", "bar", "baz"]))
+  await suite.step(
+    "too many args",
+    () => assertThrows(() => parse(new Option(), ["foo", "bar", "baz"])),
   );
-  await suite.step("duplicate otion", () =>
-    assertThrows(() =>
-      parse(new Option(), ["INPUT", "--str", "foo", "-s", "bar"])
-    )
+  await suite.step(
+    "duplicate otion",
+    () =>
+      assertThrows(() =>
+        parse(new Option(), ["INPUT", "--str", "foo", "-s", "bar"])
+      ),
   );
-  await suite.step("fail to parse into integer", () =>
-    assertThrows(() => parse(new Option(), ["INPUT", "--int", "hello"]))
+  await suite.step(
+    "fail to parse into integer",
+    () => assertThrows(() => parse(new Option(), ["INPUT", "--int", "hello"])),
   );
-  await suite.step("fail to parse into number", () =>
-    assertThrows(() => parse(new Option(), ["INPUT", "--num", "hello"]))
+  await suite.step(
+    "fail to parse into number",
+    () => assertThrows(() => parse(new Option(), ["INPUT", "--num", "hello"])),
   );
-  await suite.step("arg to bool opt", () =>
-    assertThrows(() => parse(new Option(), ["INPUT", "--bool", "hello"]))
+  await suite.step(
+    "arg to bool opt",
+    () => assertThrows(() => parse(new Option(), ["INPUT", "--bool", "hello"])),
   );
-  await suite.step("no arg to not bool opt", () =>
-    assertThrows(() => parse(new Option(), ["INPUT", "-s"]))
+  await suite.step(
+    "no arg to not bool opt",
+    () => assertThrows(() => parse(new Option(), ["INPUT", "-s"])),
   );
-  await suite.step("unknown option", () =>
-    assertThrows(() => parse(new Option(), ["INPUT", "--unk"]))
+  await suite.step(
+    "unknown option",
+    () => assertThrows(() => parse(new Option(), ["INPUT", "--unk"])),
   );
 });
 
@@ -105,12 +117,12 @@ Deno.test("option key conversion", async (suite) => {
         s: "SHORT",
         foo: "FOO",
         bar: "BAR",
-      }
-    )
-  );
+      },
+    ));
 
-  await suite.step("disable long otpion", () =>
-    assertThrows(() => parse(new Option(), ["--foo", "FOO"]))
+  await suite.step(
+    "disable long otpion",
+    () => assertThrows(() => parse(new Option(), ["--foo", "FOO"])),
   );
 });
 
@@ -129,21 +141,25 @@ Deno.test("combined keys", async (suite) => {
     qux = "";
   }
 
-  await suite.step("flag only", () =>
-    assertObjectMatch(parse(new Option(), ["-fz"]), {
-      foo: true,
-      bar: false,
-      baz: true,
-    })
+  await suite.step(
+    "flag only",
+    () =>
+      assertObjectMatch(parse(new Option(), ["-fz"]), {
+        foo: true,
+        bar: false,
+        baz: true,
+      }),
   );
 
-  await suite.step("with argment", () =>
-    assertObjectMatch(parse(new Option(), ["-bq", "QUX"]), {
-      foo: false,
-      bar: true,
-      baz: false,
-      qux: "QUX",
-    })
+  await suite.step(
+    "with argment",
+    () =>
+      assertObjectMatch(parse(new Option(), ["-bq", "QUX"]), {
+        foo: false,
+        bar: true,
+        baz: false,
+        qux: "QUX",
+      }),
   );
 });
 
@@ -171,7 +187,7 @@ Deno.test("multiple key", () => {
     {
       foo: [],
       bar: ["one", "two", "three"],
-    }
+    },
   );
 });
 
@@ -206,30 +222,38 @@ Deno.test("subcommand", async (suite) => {
     command?: Foo | BarBaz | Qux;
   }
 
-  await suite.step("empty", () =>
-    assertObjectMatch(parse(new Root(), []), { command: undefined })
+  await suite.step(
+    "empty",
+    () => assertObjectMatch(parse(new Root(), []), { command: undefined }),
   );
 
-  await suite.step("normal", () =>
-    assertObjectMatch(parse(new Root(), ["foo", "input", "--foo"]), {
-      command: { type: "foo", inputFoo: "input", foo: true },
-    })
+  await suite.step(
+    "normal",
+    () =>
+      assertObjectMatch(parse(new Root(), ["foo", "input", "--foo"]), {
+        command: { type: "foo", inputFoo: "input", foo: true },
+      }),
   );
 
-  await suite.step("kebabify", () =>
-    assertObjectMatch(parse(new Root(), ["bar-baz", "input"]), {
-      command: { type: "barbaz", inputBar: "input", baz: false },
-    })
+  await suite.step(
+    "kebabify",
+    () =>
+      assertObjectMatch(parse(new Root(), ["bar-baz", "input"]), {
+        command: { type: "barbaz", inputBar: "input", baz: false },
+      }),
   );
 
-  await suite.step("renamed", () =>
-    assertObjectMatch(parse(new Root(), ["hoge"]), {
-      command: { type: "qux" },
-    })
+  await suite.step(
+    "renamed",
+    () =>
+      assertObjectMatch(parse(new Root(), ["hoge"]), {
+        command: { type: "qux" },
+      }),
   );
 
-  await suite.step("unknown", () =>
-    assertThrows(() => parse(new Root(), ["foobar"]))
+  await suite.step(
+    "unknown",
+    () => assertThrows(() => parse(new Root(), ["foobar"])),
   );
 
   await suite.step("not effect on other commands", () => {

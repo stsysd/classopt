@@ -20,7 +20,7 @@ type TextTable<T extends Record<string, string> = Record<string, string>> = {
 
 function textTable<T extends Record<string, string>>(
   values: T[],
-  headers: (keyof T)[]
+  headers: (keyof T)[],
 ): TextTable<T> {
   return {
     type: "TextTable",
@@ -52,7 +52,7 @@ function _buildText(builder: TextBuilder): string[] {
       builder.headers.map((h) => [
         h,
         Math.max(...builder.values.map((v) => v[h].length)),
-      ])
+      ]),
     );
     return builder.values.map((val) =>
       builder.headers

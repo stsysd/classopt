@@ -104,7 +104,7 @@ export class MissingArgs extends ParseError {
   constructor(names: string[], target: object) {
     super(
       `Missing argments: ${names.map((name) => `<${name}>`).join(" ")}`,
-      target
+      target,
     );
   }
 }
