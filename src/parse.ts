@@ -80,9 +80,9 @@ export function parse<T extends object>(target: T, argv: string[]): T {
           return val;
         });
       }
-    } else if (meta.cmds != null && meta.cmdMap != null) {
+    } else if (meta.cmds?.length) {
       const [key, ...args] = q.rest();
-      const desc = meta.cmdMap.get(key);
+      const desc = meta.cmdMap!.get(key);
       if (desc == null) {
         throw new errors.UnknownCommandName(key, target);
       }
