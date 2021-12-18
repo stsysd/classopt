@@ -24,10 +24,7 @@ export function Opt<Mul extends boolean = false>(opts?: {
   type?: "boolean";
   about?: string;
   long?: string | false;
-  short?: string | false;
-  multiple?: Mul;
-}): <K extends string | symbol>(
-  target: { [key in K]?: Mul extends true ? boolean[] : boolean },
+  short?: string | true;
   prop: K,
 ) => void;
 
@@ -38,7 +35,7 @@ export function Opt<
   type: N;
   about?: string;
   long?: string | false;
-  short?: string | false;
+  short?: string | true;
   multiple?: Mul;
 }): <K extends string | symbol>(
   target: {
@@ -51,7 +48,7 @@ export function Opt<T, Mul extends boolean = false>(opts: {
   type: (arg: string) => Either<T>;
   about?: string;
   long?: string | false;
-  short?: string | false;
+  short?: string | true;
   multiple?: Mul;
 }): <K extends string | symbol>(
   target: { [key in K]?: Mul extends true ? T[] : T },
@@ -65,7 +62,7 @@ export function Opt<T, Mul extends boolean = false>(opts: {
   };
   about?: string;
   long?: string | false;
-  short?: string | false;
+  short?: string | true;
   multiple?: Mul;
 }): <K extends string | symbol>(
   target: { [key in K]?: Mul extends true ? T[] : T },
@@ -84,7 +81,7 @@ export function Opt(
       };
     about?: string;
     long?: string | false;
-    short?: string | false;
+    short?: string | true;
     multiple?: boolean;
   } = {},
 ): <K extends string | symbol>(
@@ -110,9 +107,11 @@ export function Opt(
     }
 
     if (short) {
+      if (typeof short === "string") {
       keys.short = short[0];
-    } else if (short != null) {
-      keys.short = "";
+      } else {
+        keys.short = keys.long[0];
+      }
     }
 
     keys.short = keys.short && `-${keys.short}`;
