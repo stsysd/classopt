@@ -1,6 +1,6 @@
 # classopt
 
-*classopt* is a command line arguments parser for deno based with decorators.
+_classopt_ is a command line arguments parser for deno based with decorators.
 
 ## Usage Example
 
@@ -28,8 +28,6 @@ class Program extends Command {
 }
 
 await Program.run(Deno.args);
-
-
 ```
 
 ```console
@@ -52,10 +50,7 @@ $ deno run examples/basic.ts -p pass --debug stsysd
 <username> = stsysd
 -p, --password = pass
 --debug = true
-
 ```
-
-
 
 ### Options
 
@@ -111,7 +106,6 @@ class Program extends Command {
 }
 
 await Program.run(Deno.args);
-
 ```
 
 ```console
@@ -165,7 +159,6 @@ class Program extends Command {
 }
 
 await Program.run(Deno.args);
-
 ```
 
 ```console
@@ -184,7 +177,6 @@ ARGS
     <named>    `name` option is used in help
     [opt]      optioanl argument
 ```
-
 
 ### Sub Commands
 
@@ -231,8 +223,6 @@ class Program extends Command {
 }
 
 await Program.run(Deno.args);
-
-
 ```
 
 ```
