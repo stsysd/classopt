@@ -15,7 +15,7 @@ function optTable(opts: OptDescriptor[]): TextBuilder {
     .filter((desc) => desc.about)
     .map((desc) => {
       const { type, about, long, short } = desc;
-      let usage = [short, long].join(", ");
+      let usage = [short, long].filter(Boolean).join(", ");
       if (type !== "boolean") {
         usage = `${usage} <${type}>`;
       }
