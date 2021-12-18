@@ -15,7 +15,7 @@ Deno.test("duplicate long key", () =>
 Deno.test("duplicate short key", () =>
   assertThrows(() => {
     class _Opt {
-      @Opt({ type: "string" })
+      @Opt({ type: "string", short: true })
       foo = "foo";
 
       @Opt({ type: "string", short: "f" })
@@ -76,5 +76,13 @@ Deno.test("define arg argments after cmd", () =>
 
       @Cmd(Sub)
       sub?: Sub;
+    }
+  }));
+
+Deno.test("indetermin option key", () =>
+  assertThrows(() => {
+    class _Opt {
+      @Opt({ long: false })
+      foo = "";
     }
   }));

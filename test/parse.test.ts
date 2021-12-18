@@ -1,4 +1,4 @@
-import { Arg, Cmd, Name, Opt, parse } from "../mod.ts";
+import { Arg, Cmd, Flag, Name, Opt, parse } from "../mod.ts";
 import {
   assertObjectMatch,
   assertThrows,
@@ -13,7 +13,7 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
     @Opt({ type: "number" })
     num = 0;
 
-    @Opt()
+    @Flag()
     bool = false;
 
     @Arg()
@@ -93,7 +93,7 @@ Deno.test("option key conversion", async (suite) => {
     @Opt({ type: "string" })
     s = "";
 
-    @Opt({ type: "string", long: false })
+    @Opt({ type: "string", long: false, short: "f" })
     foo = "";
 
     @Opt({ type: "string", short: "x" })
@@ -128,13 +128,13 @@ Deno.test("option key conversion", async (suite) => {
 
 Deno.test("combined keys", async (suite) => {
   class Option {
-    @Opt({ short: "f" })
+    @Flag({ short: "f" })
     foo = false;
 
-    @Opt({ short: "b" })
+    @Flag({ short: "b" })
     bar = false;
 
-    @Opt({ short: "z" })
+    @Flag({ short: "z" })
     baz = false;
 
     @Opt({ type: "string", short: "q" })
@@ -165,28 +165,18 @@ Deno.test("combined keys", async (suite) => {
 
 Deno.test("multiple key", () => {
   class Option {
-    @Opt({ multiple: true })
-    foo = [];
-
-    @Opt({ type: "string", multiple: true })
-    bar!: string[];
+    @Opt({ multiple: true, short: true })
+    foo?: string[];
   }
 
   assertObjectMatch(parse(new Option(), []), {
     foo: [],
-    bar: [],
-  });
-
-  assertObjectMatch(parse(new Option(), ["-fff"]), {
-    foo: [true, true, true],
-    bar: [],
   });
 
   assertObjectMatch(
-    parse(new Option(), ["-b", "one", "-b", "two", "-b", "three"]),
+    parse(new Option(), ["-f", "one", "-f", "two", "-f", "three"]),
     {
-      foo: [],
-      bar: ["one", "two", "three"],
+      foo: ["one", "two", "three"],
     },
   );
 });
@@ -198,7 +188,7 @@ Deno.test("subcommand", async (suite) => {
     @Arg()
     inputFoo = "";
 
-    @Opt()
+    @Flag()
     foo = false;
   }
 
@@ -208,7 +198,7 @@ Deno.test("subcommand", async (suite) => {
     @Arg()
     inputBar = "";
 
-    @Opt()
+    @Flag()
     baz = false;
   }
 
