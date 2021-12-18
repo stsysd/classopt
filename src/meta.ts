@@ -58,24 +58,32 @@ function confirmMetaData(_target: object): asserts _target is MetaDataHolder {
   if (Reflect.has(target, CLASSOPT_META)) {
     const { opts, optMap, args, cmds, cmdMap, inits, ...rest } =
       target[CLASSOPT_META];
-    target[CLASSOPT_META] = {
-      opts: [...opts],
-      optMap: new Map(optMap),
-      args: args ? [...args] : null,
-      cmds: cmds ? [...cmds] : null,
-      cmdMap: cmdMap ? new Map(cmdMap) : null,
-      inits: [...inits],
-      ...rest,
-    };
+    Object.defineProperty(target, CLASSOPT_META, {
+      enumerable: false,
+      writable: true,
+      value: {
+        opts: [...opts],
+        optMap: new Map(optMap),
+        args: args ? [...args] : null,
+        cmds: cmds ? [...cmds] : null,
+        cmdMap: cmdMap ? new Map(cmdMap) : null,
+        inits: [...inits],
+        ...rest,
+      },
+    });
   } else {
-    target[CLASSOPT_META] = {
-      opts: [],
-      optMap: new Map(),
-      args: [],
-      cmds: [],
-      cmdMap: new Map(),
-      inits: [],
-    };
+    Object.defineProperty(target, CLASSOPT_META, {
+      enumerable: false,
+      writable: true,
+      value: {
+        opts: [],
+        optMap: new Map(),
+        args: [],
+        cmds: [],
+        cmdMap: new Map(),
+        inits: [],
+      },
+    });
   }
 }
 
@@ -121,6 +129,10 @@ export function pushOpt(target: object, desc: OptDescriptor) {
       throw new errors.DuplicateOptKey(target, desc.prop, desc.long);
     }
     meta.optMap.set(desc.long, desc);
+  }
+
+  if (!desc.short && !desc.long) {
+    throw new errors.IndeterminateOptKey(target, desc.prop);
   }
 
   if (desc.multiple) {

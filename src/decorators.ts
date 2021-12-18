@@ -20,19 +20,59 @@ type DecodeTypeMap = {
   number: number;
 };
 
-export function Opt<Mul extends boolean = false>(opts?: {
-  type?: "boolean";
+export function Flag(opts: {
   about?: string;
   long?: string | false;
   short?: string | true;
+} = {}): <K extends string | symbol>(
+  target: { [key in K]?: boolean },
   prop: K,
-) => void;
+) => void {
+  return (target, prop) => {
+    const keys = { long: "", short: "" };
+    if (typeof prop === "string") {
+      if (prop.length > 1) {
+        keys.long = kebabify(prop);
+      } else {
+        keys.short = prop;
+      }
+    }
+
+    const { long, short, ...rest } = opts;
+    if (long) {
+      keys.long = long;
+    } else if (long != null) {
+      keys.long = "";
+    }
+
+    if (short) {
+      if (typeof short === "string") {
+        keys.short = short[0];
+      } else {
+        keys.short = keys.long[0];
+      }
+    }
+
+    keys.short = keys.short && `-${keys.short}`;
+    keys.long = keys.long && `--${keys.long}`;
+
+    pushOpt(target, {
+      about: "",
+      prop,
+      multiple: false,
+      $stopEarly: false,
+      type: "boolean",
+      ...keys,
+      ...rest,
+    });
+  };
+}
 
 export function Opt<
-  N extends keyof DecodeTypeMap,
+  N extends keyof DecodeTypeMap = "string",
   Mul extends boolean = false,
 >(opts?: {
-  type: N;
+  type?: N;
   about?: string;
   long?: string | false;
   short?: string | true;
@@ -72,7 +112,6 @@ export function Opt<T, Mul extends boolean = false>(opts: {
 export function Opt(
   opts: {
     type?:
-      | "boolean"
       | keyof DecodeTypeMap
       | ((arg: string) => Either<unknown>)
       | {
@@ -93,7 +132,6 @@ export function Opt(
     if (typeof prop === "string") {
       if (prop.length > 1) {
         keys.long = kebabify(prop);
-        keys.short = keys.long[0];
       } else {
         keys.short = prop;
       }
@@ -108,7 +146,7 @@ export function Opt(
 
     if (short) {
       if (typeof short === "string") {
-      keys.short = short[0];
+        keys.short = short[0];
       } else {
         keys.short = keys.long[0];
       }
@@ -126,7 +164,8 @@ export function Opt(
     } else if (typeof type === "function") {
       decoder = type;
     } else if (type == null) {
-      typeName = "boolean";
+      decoder = Decoders.string;
+      typeName = "string";
     } else if (typeof type === "object") {
       decoder = type.decode;
       typeName = type.name;
