@@ -116,16 +116,16 @@ USAGE
     program [OPTIONS]
 
 OPTIONS
-    --flag                 default option type is boolean
-    --str <string>         string option
-    --num <number>         number option
-    --multiple <string>    option that can be specified multiple times
-    -s, --short1           enable short key
-    -S, --short2           specify short key
-    -L                     disable long key (need `short` option)
-    --long-key             specify long key
-    -V, --version          Prints version information
-    -h, --help             Prints help information
+    --flag                   boolean option
+    --str <string>           string option as default
+    --num <number>           number option
+    --multiple <string>      option that can be specified multiple times
+    -s, --short1 <string>    enable short key
+    -S, --short2 <string>    specify short key
+    -L <string>              disable long key (need `short` option)
+    --long-key <string>      specify long key
+    -V, --version            Prints version information
+    -h, --help               Prints help information
 ```
 
 ### Arguments
@@ -225,7 +225,7 @@ class Program extends Command {
 await Program.run(Deno.args);
 ```
 
-```
+```console
 $ deno run examples/cmd.ts --help
 program - Help Text for Top Command
 
@@ -249,7 +249,6 @@ USAGE
 OPTIONS
     --full-path    Prints full path
     -h, --help     Prints help information
-
 
 $ deno run examples/cmd.ts get --help
 get - Help Text for 'get' Command
