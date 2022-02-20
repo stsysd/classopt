@@ -35,7 +35,7 @@ Deno.test("define required arg after optional args", () =>
   assertThrows(() => {
     class _Opt {
       @Arg({ optional: true })
-      optional = "";
+      optional?: string;
 
       @Arg({ optional: false })
       required = "";

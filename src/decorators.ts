@@ -184,13 +184,16 @@ export function Opt(
   };
 }
 
-export function Arg<T = string>(
+export function Arg<T = string, Op extends boolean = false>(
   opts: {
     name?: string;
     about?: string;
-    optional?: boolean;
+    optional?: Op;
   } = {},
-): <K extends string>(target: { [key in K]: T }, prop: K) => void {
+): <K extends string>(
+  target: Op extends false ? { [key in K]: T } : { [key in K]?: T },
+  prop: K,
+) => void {
   return (target, prop) => {
     const { optional, ...rest } = opts;
     pushArg(target, {

@@ -10,7 +10,7 @@ class Program extends Command {
   str = "";
 
   @Arg({ about: "optioanl argument", optional: true })
-  opt = "";
+  opt?: string;
 
   // The order of arguments is determined by the order in which they are defined
   // So required arguments cannot be defined after optional arguments
