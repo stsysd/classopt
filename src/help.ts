@@ -12,14 +12,13 @@ import {
 
 function optTable(opts: OptDescriptor[]): TextBuilder {
   const vals = opts
-    .filter((desc) => desc.about)
     .map((desc) => {
       const { type, about, long, short } = desc;
       let usage = [short, long].filter(Boolean).join(", ");
       if (type !== "boolean") {
         usage = `${usage} <${type}>`;
       }
-      return { usage, about };
+      return { usage, about: about ?? "" };
     });
   if (vals.length === 0) return null;
   return ["", "OPTIONS", indentation(textTable(vals, ["usage", "about"]))];
@@ -27,7 +26,6 @@ function optTable(opts: OptDescriptor[]): TextBuilder {
 
 function argTable(args: ArgDescriptor[]): TextBuilder {
   const vals = args
-    .filter((desc) => desc.about)
     .map((desc) => {
       const { name, about, kind } = desc;
       let usage;
@@ -40,7 +38,7 @@ function argTable(args: ArgDescriptor[]): TextBuilder {
       } else {
         throw new errors.InternalError("unreachable");
       }
-      return { usage, about };
+      return { usage, about: about ?? "" };
     });
 
   if (vals.length === 0) return null;
