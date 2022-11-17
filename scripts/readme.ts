@@ -38,7 +38,11 @@ async function _embedCommand(cmd: string, sh = "bash"): Promise<string> {
   }
 }
 
-console.log(`# classopt
+console.log(`
+[![ci](https://github.com/stsysd/classopt/actions/workflows/ci.yml/badge.svg)](https://github.com/stsysd/classopt/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/stsysd/classopt/branch/main/graph/badge.svg?token=I7PRYZ3Z71)](https://codecov.io/gh/stsysd/classopt)
+
+# classopt
 
 _classopt_ is a command line arguments parser for deno based with decorators.
 
@@ -71,4 +75,4 @@ ${await embedCommands([
   "deno run examples/cmd.ts --help",
   "deno run examples/cmd.ts list --help",
   "deno run examples/cmd.ts get --help",
-])}`);
+])}`.trimStart());
