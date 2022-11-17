@@ -1,6 +1,12 @@
 import * as errors from "./errors.ts";
 import { Queue } from "./utils.ts";
-import { initialize, metadata } from "./meta.ts";
+import {
+  ArgDescriptor,
+  initialize,
+  MetaData,
+  metadata,
+  OptDescriptor,
+} from "./meta.ts";
 
 function normalizeArgs(argv: string[]): string[] {
   const combinedPattern = /^-[a-zA-Z0-9$]{2,}$/;
@@ -14,99 +20,136 @@ function normalizeArgs(argv: string[]): string[] {
 
 // deno-lint-ignore ban-types
 export function parse<T extends object>(target: T, argv: string[]): T {
-  initialize(target);
-  const q = new Queue(normalizeArgs(argv));
-  const meta = metadata(target);
-  const keys = new Set();
-  const argQ = new Queue(meta.args ?? []);
+  new Parser(target).parse(argv);
+  return target;
+}
 
-  let disableOptionParsing = false;
+class Parser {
+  // deno-lint-ignore no-explicit-any
+  target: any;
+  meta: MetaData;
+  argDescQ: Queue<ArgDescriptor>;
+  parsedOptKeys: Set<string>;
+  skip = false;
 
-  while (!q.empty()) {
-    if (!disableOptionParsing && q.peek() === "--") {
-      q.pop();
-      disableOptionParsing = true;
-    } else if (
-      !disableOptionParsing && q.peek().startsWith("-") && q.peek().length > 1
-    ) {
-      const key = q.pop();
-      const desc = meta.optMap.get(key);
-      if (!desc) {
-        throw new errors.UnknownOptKey(key, target);
-      }
+  // deno-lint-ignore no-explicit-any
+  constructor(target: any) {
+    initialize(target);
+    this.target = target;
+    this.meta = metadata(target);
+    this.argDescQ = new Queue(this.meta.args ?? []);
+    this.parsedOptKeys = new Set();
+  }
 
-      let val: unknown;
-      if (desc.decoder) {
-        if (q.empty()) {
-          throw new errors.MissingOptArg(key, target);
-        }
-        const [err, ret] = desc.decoder(q.pop());
-        if (err != null) {
-          throw new errors.InvalidArg(err, target);
-        }
-        val = ret;
+  parse(args: string[]) {
+    const q = new Queue(normalizeArgs(args));
+    while (!q.empty()) {
+      const arg = q.pop();
+      if (arg === "--") {
+        this.parseRest(q);
+      } else if (arg.startsWith("-") && arg.length > 1) {
+        this.parseOpt(arg, q);
+      } else if (!this.argDescQ.empty()) {
+        this.parseArg(arg, q);
+      } else if (this.meta.cmds) {
+        this.parseCmd(arg, q);
       } else {
-        val = true;
+        throw new errors.TooManyArgs(this.target);
       }
 
-      if (desc.multiple) {
-        // deno-lint-ignore no-explicit-any
-        (target as any)[desc.prop].push(val);
-      } else {
-        // deno-lint-ignore no-explicit-any
-        (target as any)[desc.prop] = val;
+      if (this.skip) {
+        return;
       }
-
-      if (!desc.multiple) {
-        for (const key of [desc.short, desc.long]) {
-          if (key === "") continue;
-          if (keys.has(key)) {
-            throw new errors.DuplicateOptValue(key, target);
-          }
-          keys.add(key);
-        }
-      }
-      if (desc.$stopEarly) return target;
-    } else if (!argQ.empty()) {
-      const desc = argQ.pop();
-      const { prop } = desc;
-      if (desc.kind != "rest") {
-        const [err, val] = desc.decoder(q.pop());
-        if (err) {
-          throw new errors.InvalidArg(err, target);
-        }
-        // deno-lint-ignore no-explicit-any
-        (target as any)[prop] = val;
-      } else {
-        // deno-lint-ignore no-explicit-any
-        (target as any)[prop] = q.rest().map((s) => {
-          const [err, val] = desc.decoder(s);
-          if (err) {
-            throw new errors.InvalidArg(err, target);
-          }
-          return val;
-        });
-      }
-    } else if (meta.cmds?.length) {
-      const [key, ...args] = q.rest();
-      const desc = meta.cmdMap!.get(key);
-      if (desc == null) {
-        throw new errors.UnknownCommandName(key, target);
-      }
-      const cmd = parse(new desc.command(), args);
-      // deno-lint-ignore no-explicit-any
-      (target as any)[desc.prop] = cmd;
-      return target;
-    } else {
-      throw new errors.TooManyArgs(target);
+    }
+    const names = this.argDescQ.rest().filter((desc) =>
+      desc.kind === "required"
+    ).map((desc) => desc.name);
+    if (names.length > 0) {
+      throw new errors.MissingArgs(names, this.target);
     }
   }
-  if (argQ != null && !argQ.empty() && argQ.peek().kind === "required") {
-    const names = argQ
-      .rest()
-      .filter((desc) => desc.kind === "required")
-      .map((desc) => desc.name);
-    throw new errors.MissingArgs(names, target);
+
+  parseRest(q: Queue<string>) {
+    while (!q.empty()) {
+      const arg = q.pop();
+      this.parseArg(arg, q);
+    }
   }
-  return target;
+
+  parseOpt(arg: string, q: Queue<string>) {
+    const desc = this.meta.optMap.get(arg);
+    if (desc == null) {
+      throw new errors.UnknownOptKey(arg, this.target);
+    }
+
+    if (desc.decoder) {
+      if (q.empty()) {
+        throw new errors.MissingOptArg(arg, this.target);
+      }
+      const val = q.pop();
+      const [err, ret] = desc.decoder(val);
+      if (err != null) {
+        throw new errors.InvalidArg(err, this.target);
+      }
+      this.updatePropByOpt(desc, ret);
+    } else {
+      this.updatePropByOpt(desc, true);
+    }
+
+    if (desc.$stopEarly) {
+      // discard rest
+      q.rest();
+      this.skip = true;
+    }
+  }
+
+  updatePropByOpt(desc: OptDescriptor, val: unknown) {
+    if (desc.multiple) {
+      this.target[desc.prop].push(val);
+      return;
+    }
+
+    this.assertDuplicateOpt(desc);
+    this.target[desc.prop] = val;
+    this.parsedOptKeys.add(desc.short);
+    this.parsedOptKeys.add(desc.long);
+  }
+
+  assertDuplicateOpt(desc: OptDescriptor) {
+    for (const key of [desc.short, desc.long]) {
+      if (key === "") continue;
+      if (this.parsedOptKeys.has(key)) {
+        throw new errors.DuplicateOptValue(key, this.target);
+      }
+    }
+  }
+
+  parseArg(arg: string, q: Queue<string>) {
+    const { prop, kind, decoder } = this.argDescQ.pop();
+    if (kind !== "rest") {
+      const [err, val] = decoder(arg);
+      if (err) {
+        throw new errors.InvalidArg(err, this.target);
+      }
+      this.target[prop] = val;
+    } else {
+      this.target[prop] = q.rest().map((s) => {
+        const [err, val] = decoder(s);
+        if (err) {
+          throw new errors.InvalidArg(err, this.target);
+        }
+        return val;
+      });
+    }
+  }
+
+  parseCmd(arg: string, q: Queue<string>) {
+    const desc = this.meta.cmdMap?.get(arg);
+    if (desc == null) {
+      throw new errors.UnknownCommandName(arg, this.target);
+    }
+    const cmd = new desc.command();
+    new Parser(cmd).parse(q.rest());
+    this.target[desc.prop] = cmd;
+  }
 }
