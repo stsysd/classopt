@@ -23,7 +23,7 @@ jobs:
           diff README.md <(deno run --allow-run --allow-read=examples scripts/readme.ts)
       - name: Run tests
         run: |
-          deno test --unstable --coverage=coverage
+          deno test --allow-read --coverage=coverage
       - name: Create coverage report
         run: |
           deno coverage ./coverage --lcov > coverage.lcov
