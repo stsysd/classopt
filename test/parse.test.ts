@@ -48,6 +48,17 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
     }
   });
 
+  await suite.step("double dash", () => {
+    const args = ["--", "--unknown"];
+    const exp = {
+      str: "default",
+      num: 0,
+      bool: false,
+      input: "--unknown",
+    };
+    assertObjectMatch(parse(new Option(), args), exp);
+  });
+
   await suite.step(
     "lack of required arg",
     () => assertThrows(() => parse(new Option(), ["--str", "string"])),
