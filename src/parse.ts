@@ -20,8 +20,15 @@ export function parse<T extends object>(target: T, argv: string[]): T {
   const keys = new Set();
   const argQ = new Queue(meta.args ?? []);
 
+  let disableOptionParsing = false;
+
   while (!q.empty()) {
-    if (q.peek().startsWith("-") && q.peek().length > 1) {
+    if (!disableOptionParsing && q.peek() === "--") {
+      q.pop();
+      disableOptionParsing = true;
+    } else if (
+      !disableOptionParsing && q.peek().startsWith("-") && q.peek().length > 1
+    ) {
       const key = q.pop();
       const desc = meta.optMap.get(key);
       if (!desc) {
