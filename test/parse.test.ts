@@ -1,8 +1,5 @@
 import { Arg, Cmd, Flag, Name, Opt, parse } from "../mod.ts";
-import {
-  assertObjectMatch,
-  assertThrows,
-} from "https://deno.land/std@0.114.0/testing/asserts.ts";
+import { assertObjectMatch, assertThrows } from "./deps.ts";
 import { permutations } from "https://deno.land/std@0.114.0/collections/permutations.ts";
 
 Deno.test("parse options", async (suite: Deno.TestContext) => {

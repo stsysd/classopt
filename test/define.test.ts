@@ -1,5 +1,5 @@
 import { Arg, Cmd, Opt, Rest } from "../mod.ts";
-import { assertThrows } from "https://deno.land/std@0.114.0/testing/asserts.ts";
+import { assertThrows } from "./deps.ts";
 
 Deno.test("duplicate long key", () =>
   assertThrows(() => {
