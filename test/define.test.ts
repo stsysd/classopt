@@ -1,7 +1,7 @@
 import { Arg, Cmd, Opt, Rest } from "../mod.ts";
 import { assertThrows } from "./deps.ts";
 
-Deno.test("duplicate long key", () =>
+Deno.test("duplicate long key", () => {
   assertThrows(() => {
     class _Opt {
       @Opt({ type: "string" })
@@ -10,9 +10,10 @@ Deno.test("duplicate long key", () =>
       @Opt({ type: "string", long: "foo" })
       bar = "bar";
     }
-  }));
+  });
+});
 
-Deno.test("duplicate short key", () =>
+Deno.test("duplicate short key", () => {
   assertThrows(() => {
     class _Opt {
       @Opt({ type: "string", short: true })
@@ -21,17 +22,19 @@ Deno.test("duplicate short key", () =>
       @Opt({ type: "string", short: "f" })
       bar = "foo-bar";
     }
-  }));
+  });
+});
 
-Deno.test("invalid key", () =>
+Deno.test("invalid key", () => {
   assertThrows(() => {
     class _Opt {
       @Opt({ type: "string" })
       "foo+bar" = "foo";
     }
-  }));
+  });
+});
 
-Deno.test("define required arg after optional args", () =>
+Deno.test("define required arg after optional args", () => {
   assertThrows(() => {
     class _Opt {
       @Arg({ optional: true })
@@ -40,9 +43,10 @@ Deno.test("define required arg after optional args", () =>
       @Arg({ optional: false })
       required = "";
     }
-  }));
+  });
+});
 
-Deno.test("define rest args after other args", () =>
+Deno.test("define rest args after other args", () => {
   assertThrows(() => {
     class _Opt {
       @Rest()
@@ -51,9 +55,10 @@ Deno.test("define rest args after other args", () =>
       @Arg({ optional: true })
       required = "";
     }
-  }));
+  });
+});
 
-Deno.test("define cmd after args", () =>
+Deno.test("define cmd after args", () => {
   assertThrows(() => {
     class Sub {}
 
@@ -64,9 +69,10 @@ Deno.test("define cmd after args", () =>
       @Cmd(Sub)
       sub?: Sub;
     }
-  }));
+  });
+});
 
-Deno.test("define arg argments after cmd", () =>
+Deno.test("define arg argments after cmd", () => {
   assertThrows(() => {
     class Sub {}
 
@@ -77,12 +83,14 @@ Deno.test("define arg argments after cmd", () =>
       @Cmd(Sub)
       sub?: Sub;
     }
-  }));
+  });
+});
 
-Deno.test("indetermin option key", () =>
+Deno.test("indetermin option key", () => {
   assertThrows(() => {
     class _Opt {
       @Opt({ long: false })
       foo = "";
     }
-  }));
+  });
+});

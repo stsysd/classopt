@@ -58,38 +58,53 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
 
   await suite.step(
     "lack of required arg",
-    () => assertThrows(() => parse(new Option(), ["--str", "string"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["--str", "string"]));
+    },
   );
   await suite.step(
     "too many args",
-    () => assertThrows(() => parse(new Option(), ["foo", "bar", "baz"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["foo", "bar", "baz"]));
+    },
   );
   await suite.step(
     "duplicate otion",
-    () =>
+    () => {
       assertThrows(() =>
         parse(new Option(), ["INPUT", "--str", "foo", "-s", "bar"])
-      ),
+      );
+    },
   );
   await suite.step(
     "fail to parse into integer",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--int", "hello"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["INPUT", "--int", "hello"]));
+    },
   );
   await suite.step(
     "fail to parse into number",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--num", "hello"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["INPUT", "--num", "hello"]));
+    },
   );
   await suite.step(
     "arg to bool opt",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--bool", "hello"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["INPUT", "--bool", "hello"]));
+    },
   );
   await suite.step(
     "no arg to not bool opt",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "-s"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["INPUT", "-s"]));
+    },
   );
   await suite.step(
     "unknown option",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--unk"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["INPUT", "--unk"]));
+    },
   );
 });
 
@@ -130,7 +145,9 @@ Deno.test("option key conversion", async (suite) => {
 
   await suite.step(
     "disable long otpion",
-    () => assertThrows(() => parse(new Option(), ["--foo", "FOO"])),
+    () => {
+      assertThrows(() => parse(new Option(), ["--foo", "FOO"]));
+    },
   );
 });
 
@@ -251,7 +268,9 @@ Deno.test("subcommand", async (suite) => {
 
   await suite.step(
     "unknown",
-    () => assertThrows(() => parse(new Root(), ["foobar"])),
+    () => {
+      assertThrows(() => parse(new Root(), ["foobar"]));
+    },
   );
 
   await suite.step("not effect on other commands", () => {
