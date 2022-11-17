@@ -1,6 +1,7 @@
 .PHONY: test
 test:
-	deno test -A --unstable
+	deno test --coverage=.coverage
+	deno coverage .coverage --lcov > lcov.info
 
 .PHONY: check
 check:
