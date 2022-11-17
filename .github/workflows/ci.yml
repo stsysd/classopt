@@ -17,10 +17,18 @@ jobs:
       - name: Run lint
         run: |
           deno lint
-      - name: Run tests
-        run: |
-          deno test --unstable
       - name: Run diff README
         shell: bash
         run: |
           diff README.md <(deno run --allow-run --allow-read=examples scripts/readme.ts)
+      - name: Run tests
+        run: |
+          deno test --unstable --coverage=coverage
+      - name: Create coverage report
+        run: |
+          deno coverage ./coverage --lcov > coverage.lcov
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.1
+        with:
+          file: ./coverage.lcov
+          fail_ci_if_error: true
