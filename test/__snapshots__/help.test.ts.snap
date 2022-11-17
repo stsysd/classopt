@@ -1,0 +1,28 @@
+export const snapshot = {};
+
+snapshot[`simple command 1`] = `
+"program
+
+USAGE
+    program [OPTIONS] <arg>
+
+OPTIONS
+    -V, --version    Prints version information
+
+ARGS
+    <arg>    "
+`;
+
+snapshot[`subcommands 1`] = `
+"root
+
+USAGE
+    root [OPTIONS]
+
+OPTIONS
+    -V, --version    Prints version information
+
+COMMANDS
+    foo    (NO HELP TEXT)
+    baz    (NO HELP TEXT)"
+`;
