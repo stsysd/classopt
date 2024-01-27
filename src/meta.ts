@@ -1,7 +1,7 @@
 import * as errors from "./errors.ts";
 import { Constructor, kebabify } from "./utils.ts";
 
-export type Either<T> = [error: string | null, result?: T];
+export type Either<T> = [error: string] | [error: null, result: T];
 export type Decoder<T> = (arg: string) => Either<T>;
 
 export type OptDescriptor = {
