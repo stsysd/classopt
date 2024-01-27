@@ -40,7 +40,7 @@ export abstract class Command<Context = void> {
   }
 }
 
-const HELP_FLAG = Symbol("help-flag");
+const HELP_FLAG = Symbol("classopt-help-flag");
 export function Help(
   about: string,
 ): <T extends Command<unknown>>(target: Constructor<T>) => void {
@@ -66,7 +66,7 @@ export function Help(
   };
 }
 
-const VERSION_FLAG = Symbol("version-flag");
+const VERSION_FLAG = Symbol("classopt-version-flag");
 export function Version(
   ver: string,
 ): <T extends Command<unknown>>(target: Constructor<T>) => void {

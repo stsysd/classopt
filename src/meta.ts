@@ -34,7 +34,7 @@ export type Initializer<T = unknown> = {
   init(): T;
 };
 
-const CLASSOPT_META = Symbol("metadata for classopt");
+const CLASSOPT_META = Symbol("classopt-metadata");
 
 export type MetaData = {
   opts: OptDescriptor[];
