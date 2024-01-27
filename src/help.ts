@@ -57,7 +57,6 @@ function cmdTable(cmds: CommandDescriptor[]): TextBuilder {
   return ["", "COMMANDS", indentation(textTable(vals, ["usage", "about"]))];
 }
 
-// deno-lint-ignore ban-types
 function commandStack(cmd: object): string[] {
   let c = null;
   c = cmd.constructor;
@@ -69,7 +68,6 @@ function commandStack(cmd: object): string[] {
   return names;
 }
 
-// deno-lint-ignore ban-types
 export function help<T extends object>(target: T): string {
   const meta = metadata(target);
   const name = getName(target.constructor);

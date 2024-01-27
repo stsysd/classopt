@@ -1,5 +1,4 @@
 export type Constructor<
-  // deno-lint-ignore ban-types
   T extends object,
   Args extends unknown[] = unknown[],
 > = {

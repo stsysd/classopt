@@ -26,7 +26,6 @@ export type ArgDescriptor = {
 
 export type CommandDescriptor = {
   prop: string | symbol;
-  // deno-lint-ignore ban-types
   command: Constructor<object>;
 };
 
@@ -48,7 +47,6 @@ export type MetaData = {
 
 type MetaDataHolder = { [CLASSOPT_META]: MetaData };
 
-// deno-lint-ignore ban-types
 function confirmMetaData(_target: object): asserts _target is MetaDataHolder {
   if (_target == null) {
     throw new errors.InternalError("primitive value never has metadata");
@@ -87,13 +85,11 @@ function confirmMetaData(_target: object): asserts _target is MetaDataHolder {
   }
 }
 
-// deno-lint-ignore ban-types
 export function metadata(target: object): MetaData {
   confirmMetaData(target);
   return target[CLASSOPT_META];
 }
 
-// deno-lint-ignore ban-types
 export function initialize(target: object): void {
   const meta = metadata(target);
   // deno-lint-ignore no-explicit-any
@@ -108,7 +104,6 @@ export function initialize(target: object): void {
 const longKeyPattern = /^--[a-zA-Z0-9$]{2,}(-[a-zA-Z0-9$]+)*$/;
 const shortKeyPattern = /^-[a-zA-Z0-9$]$/;
 
-// deno-lint-ignore ban-types
 export function pushOpt(target: object, desc: OptDescriptor) {
   const meta = metadata(target);
   meta.opts.push(desc);
@@ -145,7 +140,6 @@ export function pushOpt(target: object, desc: OptDescriptor) {
   }
 }
 
-// deno-lint-ignore ban-types
 export function pushArg(target: object, desc: ArgDescriptor) {
   const meta = metadata(target);
   if (!meta.args) {
@@ -173,7 +167,6 @@ export function pushArg(target: object, desc: ArgDescriptor) {
   }
 }
 
-// deno-lint-ignore ban-types
 export function pushCmd(target: object, desc: CommandDescriptor) {
   const meta = metadata(target);
   if (!meta.cmds || !meta.cmdMap) {

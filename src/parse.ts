@@ -18,7 +18,6 @@ function normalizeArgs(argv: string[]): string[] {
   });
 }
 
-// deno-lint-ignore ban-types
 export function parse<T extends object>(target: T, argv: string[]): T {
   new Parser(target).parse(argv);
   return target;

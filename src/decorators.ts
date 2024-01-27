@@ -231,12 +231,10 @@ export function Rest<N extends keyof DecodeTypeMap = "string">(
   };
 }
 
-// deno-lint-ignore ban-types
 type Instance<Args extends Constructor<object>[]> = {
   [Ix in keyof Args]: Args[Ix] extends Constructor<infer T> ? T : never;
 }[number];
 
-// deno-lint-ignore ban-types
 export function Cmd<Args extends Constructor<object>[]>(
   ...args: Args
 ): <P extends string>(
