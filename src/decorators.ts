@@ -1,8 +1,18 @@
-import { Constructor, kebabify } from "./utils.ts";
-import { Either, pushArg, pushCmd, pushOpt, setName } from "./meta.ts";
+import { defineName, pushArg, pushCmd, pushOpt } from "./parse.ts";
+import { kebabify } from "./string.ts";
+import type {
+  ClassDecorator,
+  ClassFieldDecorator,
+  Constructor,
+  Either,
+} from "./types.ts";
+
+type DecodeTypeMap = {
+  string: string;
+  number: number;
+};
 
 const Decoders = {
-  boolean: undefined,
   string(arg: string): Either<string> {
     return [null, arg];
   },
@@ -15,99 +25,140 @@ const Decoders = {
   },
 } as const;
 
-type DecodeTypeMap = {
-  string: string;
-  number: number;
-};
+function optionKeys(
+  name: string | symbol,
+  opts: {
+    long?: string | boolean;
+    short?: string | boolean;
+  },
+): { long?: string; short?: string } {
+  const keys = {} as {
+    long?: string;
+    short?: string;
+  };
+  const { long, short } = opts;
 
-export function Flag(opts: {
-  about?: string;
-  long?: string | false;
-  short?: string | true;
-} = {}): <K extends string | symbol>(
-  target: { [key in K]?: boolean },
-  prop: K,
-) => void {
-  return (target, prop) => {
-    const keys = { long: "", short: "" };
-    if (typeof prop === "string") {
-      if (prop.length > 1) {
-        keys.long = kebabify(prop);
-      } else {
-        keys.short = prop;
-      }
+  if (long == null) {
+    // default: generate from field name if possible
+    if (typeof name === "string" && name.length > 1) {
+      keys.long = kebabify(name);
     }
-
-    const { long, short, ...rest } = opts;
-    if (long) {
-      keys.long = long;
-    } else if (long != null) {
-      keys.long = "";
+  } else if (long === true) {
+    // true: generate from field name
+    if (typeof name !== "string") {
+      throw new Error("long option is not specified");
     }
-
-    if (short) {
-      if (typeof short === "string") {
-        keys.short = short[0];
-      } else {
-        keys.short = keys.long[0];
-      }
+    if (name.length <= 1) {
+      throw new Error("long option must be longer than 1 character");
     }
+    keys.long = kebabify(name);
+  } else if (long !== false) {
+    // string: use it as long option
+    if (long.length <= 1) {
+      throw new Error("long option must be longer than 1 character");
+    }
+    keys.long = long;
+  }
 
-    keys.short = keys.short && `-${keys.short}`;
-    keys.long = keys.long && `--${keys.long}`;
+  if (short == null) {
+    // default: generate from field name if possible
+    if (typeof name === "string" && name.length == 1) {
+      keys.short = name;
+    }
+  } else if (short === true) {
+    // true: generate from long option or field name
+    if (keys.long) {
+      keys.short = keys.long[0];
+    } else if (typeof name === "string") {
+      keys.short = name[0];
+    } else {
+      throw new Error("long option is not specified");
+    }
+  } else if (short !== false) {
+    // string: use it as short option
+    if (short.length != 1) {
+      throw new Error("short option must be 1 character");
+    }
+    keys.short = short;
+  }
 
-    pushOpt(target, {
-      about: "",
-      prop,
+  keys.short = keys.short && `-${keys.short}`;
+  keys.long = keys.long && `--${keys.long}`;
+  return keys;
+}
+
+export function Flag(
+  opts: {
+    about?: string;
+    long?: string | boolean;
+    short?: string | boolean;
+  } = {},
+): ClassFieldDecorator<boolean> {
+  return (_: undefined, ctx: ClassFieldDecoratorContext) => {
+    const keys = optionKeys(ctx.name, opts);
+    pushOpt(ctx.metadata, {
+      about: opts.about ?? "",
+      prop: ctx.name,
       multiple: false,
-      $stopEarly: false,
       type: "boolean",
       ...keys,
-      ...rest,
     });
   };
 }
 
-export function Opt<
-  N extends keyof DecodeTypeMap = "string",
-  Mul extends boolean = false,
->(opts?: {
-  type?: N;
+export function Opt<TN extends keyof DecodeTypeMap = "string">(opts?: {
+  type?: TN;
   about?: string;
-  long?: string | false;
-  short?: string | true;
-  multiple?: Mul;
-}): <K extends string | symbol>(
-  target: {
-    [key in K]?: Mul extends true ? DecodeTypeMap[N][] : DecodeTypeMap[N];
-  },
-  prop: K,
-) => void;
+  long?: string | boolean;
+  short?: string | boolean;
+  multiple?: false;
+}): ClassFieldDecorator<DecodeTypeMap[TN]>;
 
-export function Opt<T, Mul extends boolean = false>(opts: {
+export function Opt<T>(opts?: {
   type: (arg: string) => Either<T>;
   about?: string;
-  long?: string | false;
-  short?: string | true;
-  multiple?: Mul;
-}): <K extends string | symbol>(
-  target: { [key in K]?: Mul extends true ? T[] : T },
-  prop: K,
-) => void;
+  long?: string | boolean;
+  short?: string | boolean;
+  multiple?: false;
+}): ClassFieldDecorator<T>;
 
-export function Opt<T, Mul extends boolean = false>(opts: {
+export function Opt<T>(opts?: {
   type: {
-    decode: (arg: string) => Either<T>;
     name: string;
+    decode(arg: string): Either<T>;
   };
   about?: string;
-  long?: string | false;
-  short?: string | true;
-  multiple?: Mul;
-}): <K extends string | symbol>(
-  target: { [key in K]?: Mul extends true ? T[] : T },
-  prop: K,
-) => void;
+  long?: string | boolean;
+  short?: string | boolean;
+  multiple?: false;
+}): ClassFieldDecorator<T>;
+
+export function Opt<TN extends keyof DecodeTypeMap = "string">(opts?: {
+  type?: TN;
+  about?: string;
+  long?: string | boolean;
+  short?: string | boolean;
+  multiple: true;
+}): ClassFieldDecorator<DecodeTypeMap[TN][]>;
+
+export function Opt<T>(opts?: {
+  type: (arg: string) => Either<T>;
+  about?: string;
+  long?: string | boolean;
+  short?: string | boolean;
+  multiple: true;
+}): ClassFieldDecorator<T[]>;
+
+export function Opt<T>(opts?: {
+  type: {
+    name: string;
+    decode(arg: string): Either<T>;
+  };
+  about?: string;
+  long?: string | boolean;
+  short?: string | boolean;
+  multiple: true;
+}): ClassFieldDecorator<T[]>;
 
 export function Opt(
   opts: {
@@ -115,139 +166,197 @@ export function Opt(
       | keyof DecodeTypeMap
       | ((arg: string) => Either<unknown>)
       | {
-        name: string;
         decode: (arg: string) => Either<unknown>;
+        name: string;
       };
     about?: string;
-    long?: string | false;
-    short?: string | true;
+    long?: string | boolean;
+    short?: string | boolean;
     multiple?: boolean;
   } = {},
-): <K extends string | symbol>(
-  target: { [key in K]?: unknown | unknown[] },
-  prop: K,
-) => void {
-  return (target, prop) => {
-    const keys = { long: "", short: "" };
-    if (typeof prop === "string") {
-      if (prop.length > 1) {
-        keys.long = kebabify(prop);
-      } else {
-        keys.short = prop;
-      }
-    }
-
-    const { long, short, type, ...rest } = opts;
-    if (long) {
-      keys.long = long;
-    } else if (long != null) {
-      keys.long = "";
-    }
-
-    if (short) {
-      if (typeof short === "string") {
-        keys.short = short[0];
-      } else {
-        keys.short = keys.long[0];
-      }
-    }
-
-    keys.short = keys.short && `-${keys.short}`;
-    keys.long = keys.long && `--${keys.long}`;
-
-    let decoder = undefined;
-    let typeName = "input";
-
-    if (typeof type === "string" && type in Decoders) {
-      decoder = Decoders[type];
-      typeName = type;
+): ClassFieldDecorator {
+  return (_: undefined, ctx: ClassFieldDecoratorContext) => {
+    const keys = optionKeys(ctx.name, opts);
+    const { type, about, multiple } = opts;
+    if (typeof type === "string") {
+      pushOpt(ctx.metadata, {
+        about: about ?? "",
+        prop: ctx.name,
+        multiple: multiple ?? false,
+        type,
+        decoder: Decoders[type],
+        ...keys,
+      });
     } else if (typeof type === "function") {
-      decoder = type;
-    } else if (type == null) {
-      decoder = Decoders.string;
-      typeName = "string";
+      pushOpt(ctx.metadata, {
+        about: about ?? "",
+        prop: ctx.name,
+        multiple: multiple ?? false,
+        type: "input",
+        decoder: type,
+        ...keys,
+      });
     } else if (typeof type === "object") {
-      decoder = type.decode;
-      typeName = type.name;
+      pushOpt(ctx.metadata, {
+        about: about ?? "",
+        prop: ctx.name,
+        multiple: multiple ?? false,
+        type: type.name,
+        decoder: type.decode,
+        ...keys,
+      });
+    } else {
+      pushOpt(ctx.metadata, {
+        about: about ?? "",
+        prop: ctx.name,
+        multiple: multiple ?? false,
+        type: "string",
+        decoder: Decoders.string,
+        ...keys,
+      });
     }
-
-    pushOpt(target, {
-      about: "",
-      prop,
-      multiple: !!opts.multiple,
-      $stopEarly: false,
-      type: typeName,
-      decoder,
-      ...keys,
-      ...rest,
-    });
   };
 }
 
-export function Arg<T = string, Op extends boolean = false>(
-  opts: {
+export function Arg<TN extends keyof DecodeTypeMap = "string">(opts?: {
+  type?: TN;
+  name?: string;
+  about?: string;
+  optional?: false;
+}): ClassFieldDecorator<DecodeTypeMap[TN]>;
+
+export function Arg<T>(opts?: {
+  type: (arg: string) => Either<T>;
+  name?: string;
+  about?: string;
+  optional?: false;
+}): ClassFieldDecorator<T>;
+
+export function Arg<T>(opts?: {
+  type: {
+    name: string;
+    decode(arg: string): Either<T>;
+  };
+  name?: string;
+  about?: string;
+  optional?: false;
+}): ClassFieldDecorator<T>;
+
+export function Arg<TN extends keyof DecodeTypeMap = "string">(opts?: {
+  name?: string;
+  about?: string;
+  optional: true;
+}): ClassFieldDecorator<DecodeTypeMap[TN] | undefined>;
+
+export function Arg<T>(opts?: {
+  type: (arg: string) => Either<T>;
+  name?: string;
+  about?: string;
+  optional: true;
+}): ClassFieldDecorator<T | undefined>;
+
+export function Arg<T>(opts?: {
+  type: {
+    name: string;
+    decode(arg: string): Either<T>;
+  };
+  name?: string;
+  about?: string;
+  optional: true;
+}): ClassFieldDecorator<T | undefined>;
+
+export function Arg(
+  opt: {
+    type?:
+      | keyof DecodeTypeMap
+      | ((arg: string) => Either<unknown>)
+      | {
+        decode: (arg: string) => Either<unknown>;
+        name: string;
+      };
     name?: string;
     about?: string;
-    optional?: Op;
+    optional?: boolean;
   } = {},
-): <K extends string>(
-  target: Op extends false ? { [key in K]: T } : { [key in K]?: T },
-  prop: K,
-) => void {
-  return (target, prop) => {
-    const { optional, ...rest } = opts;
-    pushArg(target, {
-      name: kebabify(prop),
-      about: "",
-      prop,
-      kind: optional ? "optional" : "required",
-      type: "string",
-      decoder: (s) => [null, s],
-      ...rest,
-    });
+): ClassFieldDecorator {
+  return (_: undefined, ctx: ClassFieldDecoratorContext) => {
+    const { type, name, about, optional } = opt;
+    if (typeof type === "string") {
+      pushArg(ctx.metadata, {
+        name: name ?? kebabify(ctx.name.toString()),
+        about: about ?? "",
+        prop: ctx.name,
+        kind: optional ? "optional" : "required",
+        type,
+        decoder: Decoders[type],
+      });
+    } else if (typeof type === "function") {
+      pushArg(ctx.metadata, {
+        name: name ?? kebabify(ctx.name.toString()),
+        about: about ?? "",
+        prop: ctx.name,
+        kind: optional ? "optional" : "required",
+        type: "input",
+        decoder: type,
+      });
+    } else if (typeof type === "object") {
+      pushArg(ctx.metadata, {
+        name: name ?? kebabify(ctx.name.toString()),
+        about: about ?? "",
+        prop: ctx.name,
+        kind: optional ? "optional" : "required",
+        type: type.name,
+        decoder: type.decode,
+      });
+    } else {
+      pushArg(ctx.metadata, {
+        name: name ?? kebabify(ctx.name.toString()),
+        about: about ?? "",
+        prop: ctx.name,
+        kind: optional ? "optional" : "required",
+        type: "string",
+        decoder: Decoders.string,
+      });
+    }
   };
 }
 
-export function Rest<N extends keyof DecodeTypeMap = "string">(
+export function Rest<TN extends keyof DecodeTypeMap = "string">(
   opts: {
+    type?: TN;
     name?: string;
     about?: string;
-    type?: N;
   } = {},
-): <K extends string>(
-  target: { [key in K]: DecodeTypeMap[N][] },
-  prop: K,
-) => void {
-  return (target, prop) => {
-    pushArg(target, {
-      name: kebabify(prop),
-      about: "",
-      prop,
+): ClassFieldDecorator<DecodeTypeMap[TN][]> {
+  return (_: undefined, ctx: ClassFieldDecoratorContext) => {
+    pushArg(ctx.metadata, {
+      name: opts.name ?? kebabify(ctx.name.toString()),
+      about: opts.about ?? "",
+      prop: ctx.name,
       kind: "rest",
-      type: "string",
-      decoder: (s) => [null, s],
-      ...opts,
+      type: opts.type ?? "string",
+      decoder: Decoders[opts.type ?? "string"],
     });
   };
 }
 
-type Instance<Args extends Constructor<object>[]> = {
-  [Ix in keyof Args]: Args[Ix] extends Constructor<infer T> ? T : never;
-}[number];
-
-export function Cmd<Args extends Constructor<object>[]>(
-  ...args: Args
-): <P extends string>(
-  target: { [key in P]?: Partial<Instance<Args>> },
-  prop: P,
-) => void {
-  return (target, prop) => {
-    for (const command of args) {
-      pushCmd(target, { prop, command });
+export function Cmd<T extends object, Cs extends Constructor<T>[]>(
+  ...subs: Cs
+): ClassFieldDecorator<T | undefined> {
+  return (_: undefined, ctx: ClassFieldDecoratorContext) => {
+    for (const sub of subs) {
+      pushCmd(ctx.metadata, {
+        prop: ctx.name,
+        command: sub,
+      });
     }
   };
 }
 
-export function Name(name: string): ClassDecorator {
-  return (target) => setName(target, name);
+export function Name<T extends object, C extends Constructor<T>>(
+  name: string,
+): ClassDecorator<T, C> {
+  return (_: C, ctx: ClassDecoratorContext) => {
+    defineName(ctx, name);
+  };
 }

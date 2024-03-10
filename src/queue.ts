@@ -1,25 +1,3 @@
-export type Constructor<
-  T extends object,
-  Args extends unknown[] = unknown[],
-> = {
-  new (...args: Args): T;
-};
-
-export function kebabify(s: string): string {
-  if (s.length === 0) return s;
-  return (
-    s[0].toLowerCase() +
-    s
-      .slice(1)
-      .replaceAll(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)
-      .replaceAll("_", "-")
-  );
-}
-
-export function camelify(s: string): string {
-  return s.replaceAll(/-|_./g, (s) => s[1].toUpperCase());
-}
-
 export class EmptyQueue extends Error {
   constructor() {
     super("cannot pop value from empty queue");
@@ -39,7 +17,7 @@ export class Queue<T> {
   }
 
   pop(): T {
-    if (this.index >= this.values.length) {
+    if (this.empty()) {
       throw new EmptyQueue();
     }
     const rv = this.values[this.index];
@@ -51,6 +29,10 @@ export class Queue<T> {
     return this.index >= this.values.length;
   }
 
+  all(): readonly T[] {
+    return this.values;
+  }
+
   rest(): T[] {
     if (this.index >= this.values.length) {
       return [];
@@ -60,12 +42,3 @@ export class Queue<T> {
     return rv;
   }
 }
-
-/*
-export function mapValues<V, U>(
-  m: Record<string, V>,
-  fn: (v: V) => U
-): Record<string, U> {
-  return Object.fromEntries(Object.entries(m).map(([k, v]) => [k, fn(v)]));
-}
-*/
