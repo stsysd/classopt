@@ -1,93 +1,104 @@
 import * as errors from "./errors.ts";
-import { Constructor } from "./utils.ts";
-import { getName, pushOpt, setHelp } from "./meta.ts";
-import { parse } from "./parse.ts";
-import { help } from "./help.ts";
+import { ClassDecorator, Constructor } from "./types.ts";
+import { defineAbout, getName, help, parse, pushOpt } from "./parse.ts";
 import { red } from "../deps.ts";
 
 function handleParseError(e: unknown): void {
   if (e instanceof errors.ParseError) {
-    console.error(red(`error: ${e.message}`));
+    console.error(red(`parse error: ${e.message}`));
     console.error();
-    console.error(help(e.target));
+    console.error(help(e.target as Constructor));
+    Deno.exit(1);
+  } else if (e instanceof errors.DefinitionError) {
+    console.error(red(`definition error: ${e.message}`));
+    Deno.exit(1);
   } else {
     throw e;
   }
 }
 
 export abstract class Command<Context = void> {
-  abstract execute(ctxt: Context): Promise<void>;
+  abstract execute(ctx: Context): Promise<void> | void;
 
   help(): string {
     return help(this);
   }
 
-  parse<T extends Command>(this: T, args: string[]): T {
-    return parse(this, args);
-  }
-
-  static async run<T extends Command, Self extends Constructor<T>>(
+  static async run<
+    T extends Command<void>,
+    Self extends Constructor<T>,
+  >(
     this: Self,
     args: string[],
-  ): Promise<T> {
-    const cmd = new this();
+  ): Promise<void> {
     try {
-      await cmd.parse(args).execute();
+      await parse(this, args).execute();
     } catch (e) {
       handleParseError(e);
     }
-    return cmd;
   }
 }
 
-const HELP_FLAG = Symbol("help-flag");
-export function Help(
-  about: string,
-): <T extends Command<unknown>>(target: Constructor<T>) => void {
-  return <T extends Command<unknown>>(target: Constructor<T>) => {
-    setHelp(target, about);
-    pushOpt(target.prototype, {
-      about: "Prints help information",
+const versionFlagSymbol = Symbol("classopt-version-flag");
+
+export function Version<
+  Context,
+  T extends Command<Context>,
+  C extends Constructor<T>,
+>(ver: string): ClassDecorator<T, C> {
+  return (
+    target: C,
+    ctx: ClassDecoratorContext,
+  ) => {
+    pushOpt(ctx.metadata, {
       type: "boolean",
-      prop: HELP_FLAG,
-      long: "--help",
-      short: "-h",
+      about: "Prints version information",
+      prop: versionFlagSymbol,
+      long: "--version",
+      short: "-V",
       multiple: false,
-      $stopEarly: true,
+      stopEarly: true,
     });
     const execute = target.prototype.execute;
-    target.prototype.execute = function (this: T, ...args: unknown[]) {
-      if (Reflect.has(this, HELP_FLAG)) {
-        console.log(this.help());
+    target.prototype.execute = function (ctx: Context) {
+      const name = getName(this.constructor);
+      if (Reflect.get(this, versionFlagSymbol) === true) {
+        console.log(`${name} ${ver}`);
         return;
       }
-      return execute.call(this, ...args);
+      return execute.call(this, ctx);
     };
   };
 }
 
-const VERSION_FLAG = Symbol("version-flag");
-export function Version(
-  ver: string,
-): <T extends Command<unknown>>(target: Constructor<T>) => void {
-  return <T extends Command<unknown>>(target: Constructor<T>) => {
-    pushOpt(target.prototype, {
-      about: "Prints version information",
+const helpFlagSymbol = Symbol("classopt-name-flag");
+export function Help<
+  Context,
+  T extends Command<Context>,
+  C extends Constructor<T>,
+>(
+  about?: string,
+): ClassDecorator<T, C> {
+  return (target: C, ctx: ClassDecoratorContext) => {
+    if (about) {
+      defineAbout(ctx, about);
+    }
+    pushOpt(ctx.metadata, {
       type: "boolean",
-      prop: VERSION_FLAG,
-      long: "--version",
-      short: "-V",
+      about: "Prints help information",
+      prop: helpFlagSymbol,
+      long: "--help",
+      short: "-h",
       multiple: false,
-      $stopEarly: true,
+      stopEarly: true,
     });
     const execute = target.prototype.execute;
-    target.prototype.execute = function (this: T, ...args: unknown[]) {
-      if (Reflect.has(this, VERSION_FLAG)) {
-        const name = getName(target);
-        console.log(`${name} ${ver}`);
+    target.prototype.execute = function (ctx: Context) {
+      if (Reflect.get(this, helpFlagSymbol) === true) {
+        console.log(help(this));
         return;
       }
-      return execute.call(this, ...args);
+      return execute.call(this, ctx);
     };
   };
 }

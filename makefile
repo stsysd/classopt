@@ -1,13 +1,16 @@
 .PHONY: test
 test:
-	deno test --coverage=.coverage
+	deno test -A --coverage=.coverage
 	deno coverage .coverage --lcov > lcov.info
+
+snapshot-update:
+	deno test -A -- --update
 
 .PHONY: check
 check:
 	deno fmt
-	deno lint --unstable
+	deno lint
 
 .PHONY: readme
 readme:
-	deno run --allow-run --allow-read=examples scripts/readme.ts > README.md
+	deno run --allow-run --allow-read scripts/readme.ts > README.md

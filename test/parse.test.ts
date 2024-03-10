@@ -2,11 +2,11 @@ import { Arg, Cmd, Flag, Name, Opt, parse } from "../mod.ts";
 import {
   assertObjectMatch,
   assertThrows,
-} from "https://deno.land/std@0.114.0/testing/asserts.ts";
-import { permutations } from "https://deno.land/std@0.114.0/collections/permutations.ts";
+} from "https://deno.land/std@0.214.0/assert/mod.ts";
+import { permutations } from "https://deno.land/std@0.214.0/collections/permutations.ts";
 
 Deno.test("parse options", async (suite: Deno.TestContext) => {
-  class Option {
+  class Program {
     @Opt({ type: "string", short: "s" })
     str = "default";
 
@@ -23,7 +23,7 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
   await suite.step(
     "no option",
     () =>
-      assertObjectMatch(parse(new Option(), ["INPUT"]), {
+      assertObjectMatch(parse(Program, ["INPUT"]), {
         str: "default",
         num: 0,
         bool: false,
@@ -43,7 +43,7 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
       const args = p.join(" ").split(" ");
       await sub.step(
         args.join(" "),
-        () => assertObjectMatch(parse(new Option(), args), exp),
+        () => assertObjectMatch(parse(Program, args), exp),
       );
     }
   });
@@ -56,48 +56,63 @@ Deno.test("parse options", async (suite: Deno.TestContext) => {
       bool: false,
       input: "--unknown",
     };
-    assertObjectMatch(parse(new Option(), args), exp);
+    assertObjectMatch(parse(Program, args), exp);
   });
 
   await suite.step(
     "lack of required arg",
-    () => assertThrows(() => parse(new Option(), ["--str", "string"])),
+    () => {
+      assertThrows(() => parse(Program, ["--str", "string"]));
+    },
   );
   await suite.step(
     "too many args",
-    () => assertThrows(() => parse(new Option(), ["foo", "bar", "baz"])),
+    () => {
+      assertThrows(() => parse(Program, ["foo", "bar", "baz"]));
+    },
   );
   await suite.step(
     "duplicate otion",
-    () =>
+    () => {
       assertThrows(() =>
-        parse(new Option(), ["INPUT", "--str", "foo", "-s", "bar"])
-      ),
+        parse(Program, ["INPUT", "--str", "foo", "-s", "bar"])
+      );
+    },
   );
   await suite.step(
     "fail to parse into integer",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--int", "hello"])),
+    () => {
+      assertThrows(() => parse(Program, ["INPUT", "--int", "hello"]));
+    },
   );
   await suite.step(
     "fail to parse into number",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--num", "hello"])),
+    () => {
+      assertThrows(() => parse(Program, ["INPUT", "--num", "hello"]));
+    },
   );
   await suite.step(
     "arg to bool opt",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--bool", "hello"])),
+    () => {
+      assertThrows(() => parse(Program, ["INPUT", "--bool", "hello"]));
+    },
   );
   await suite.step(
     "no arg to not bool opt",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "-s"])),
+    () => {
+      assertThrows(() => parse(Program, ["INPUT", "-s"]));
+    },
   );
   await suite.step(
     "unknown option",
-    () => assertThrows(() => parse(new Option(), ["INPUT", "--unk"])),
+    () => {
+      assertThrows(() => parse(Program, ["INPUT", "--unk"]));
+    },
   );
 });
 
 Deno.test("option key conversion", async (suite) => {
-  class Option {
+  class Program {
     @Opt({ type: "string" })
     CamelCaseProp = "";
 
@@ -113,7 +128,7 @@ Deno.test("option key conversion", async (suite) => {
 
   await suite.step("short option", () =>
     assertObjectMatch(
-      parse(new Option(), [
+      parse(Program, [
         "--camel-case-prop",
         "CAMEL_CASE",
         "-s",
@@ -133,12 +148,14 @@ Deno.test("option key conversion", async (suite) => {
 
   await suite.step(
     "disable long otpion",
-    () => assertThrows(() => parse(new Option(), ["--foo", "FOO"])),
+    () => {
+      assertThrows(() => parse(Program, ["--foo", "FOO"]));
+    },
   );
 });
 
 Deno.test("combined keys", async (suite) => {
-  class Option {
+  class Program {
     @Flag({ short: "f" })
     foo = false;
 
@@ -155,7 +172,7 @@ Deno.test("combined keys", async (suite) => {
   await suite.step(
     "flag only",
     () =>
-      assertObjectMatch(parse(new Option(), ["-fz"]), {
+      assertObjectMatch(parse(Program, ["-fz"]), {
         foo: true,
         bar: false,
         baz: true,
@@ -165,7 +182,7 @@ Deno.test("combined keys", async (suite) => {
   await suite.step(
     "with argment",
     () =>
-      assertObjectMatch(parse(new Option(), ["-bq", "QUX"]), {
+      assertObjectMatch(parse(Program, ["-bq", "QUX"]), {
         foo: false,
         bar: true,
         baz: false,
@@ -175,17 +192,17 @@ Deno.test("combined keys", async (suite) => {
 });
 
 Deno.test("multiple key", () => {
-  class Option {
+  class Program {
     @Opt({ multiple: true, short: true })
-    foo?: string[];
+    foo!: string[];
   }
 
-  assertObjectMatch(parse(new Option(), []), {
+  assertObjectMatch(parse(Program, []), {
     foo: [],
   });
 
   assertObjectMatch(
-    parse(new Option(), ["-f", "one", "-f", "two", "-f", "three"]),
+    parse(Program, ["-f", "one", "-f", "two", "-f", "three"]),
     {
       foo: ["one", "two", "three"],
     },
@@ -225,13 +242,13 @@ Deno.test("subcommand", async (suite) => {
 
   await suite.step(
     "empty",
-    () => assertObjectMatch(parse(new Root(), []), { command: undefined }),
+    () => assertObjectMatch(parse(Root, []), { command: undefined }),
   );
 
   await suite.step(
     "normal",
     () =>
-      assertObjectMatch(parse(new Root(), ["foo", "input", "--foo"]), {
+      assertObjectMatch(parse(Root, ["foo", "input", "--foo"]), {
         command: { type: "foo", inputFoo: "input", foo: true },
       }),
   );
@@ -239,7 +256,7 @@ Deno.test("subcommand", async (suite) => {
   await suite.step(
     "kebabify",
     () =>
-      assertObjectMatch(parse(new Root(), ["bar-baz", "input"]), {
+      assertObjectMatch(parse(Root, ["bar-baz", "input"]), {
         command: { type: "barbaz", inputBar: "input", baz: false },
       }),
   );
@@ -247,18 +264,20 @@ Deno.test("subcommand", async (suite) => {
   await suite.step(
     "renamed",
     () =>
-      assertObjectMatch(parse(new Root(), ["hoge"]), {
+      assertObjectMatch(parse(Root, ["hoge"]), {
         command: { type: "qux" },
       }),
   );
 
   await suite.step(
     "unknown",
-    () => assertThrows(() => parse(new Root(), ["foobar"])),
+    () => {
+      assertThrows(() => parse(Root, ["foobar"]));
+    },
   );
 
   await suite.step("not effect on other commands", () => {
-    assertThrows(() => parse(new Root(), ["foo", "input", "--baz"]));
-    assertThrows(() => parse(new Root(), ["bar-baz", "input", "--foo"]));
+    assertThrows(() => parse(Root, ["foo", "input", "--baz"]));
+    assertThrows(() => parse(Root, ["bar-baz", "input", "--foo"]));
   });
 });

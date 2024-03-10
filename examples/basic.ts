@@ -1,10 +1,11 @@
-import { Arg, Command, Flag, Help, Opt, Version } from "../mod.ts";
+import { Arg, Command, Flag, Help, Name, Opt, Version } from "../mod.ts";
 
 @Help("Help Text for Command")
+@Name("program")
 @Version("0.0.0")
 class Program extends Command {
   @Arg({ about: "user to login" })
-  username = "";
+  username!: string;
 
   @Opt({ about: "password for user, if required", short: true })
   password = "";
@@ -12,11 +13,10 @@ class Program extends Command {
   @Flag({ about: "debug mode" })
   debug = false;
 
-  async execute() {
-    console.log(`<username> = ${this.username}`);
-    console.log(`-p, --password = ${this.password}`);
-    console.log(`--debug = ${this.debug}`);
-    await void 0; // requrie await
+  execute() {
+    console.log(`<username> = ${JSON.stringify(this.username)}`);
+    console.log(`-p, --password = ${JSON.stringify(this.password)}`);
+    console.log(`--debug = ${JSON.stringify(this.debug)}`);
   }
 }
 

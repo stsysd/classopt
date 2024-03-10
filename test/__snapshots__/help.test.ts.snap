@@ -1,0 +1,43 @@
+export const snapshot = {};
+
+snapshot[`snapshot help 1`] = `
+"program
+USAGE
+    program [OPTIONS] <bar> [baz] [rest]...
+
+OPTIONS
+    -s, --str <string>    
+
+ARGS
+    <bar>        about bar arg
+    [baz]        
+    [rest]...    about rest args"
+`;
+
+snapshot[`snapshot help (Command) 1`] = `
+"hoge - this is a hoge program
+USAGE
+    hoge [OPTIONS] <bar> [baz] [rest]...
+
+OPTIONS
+    -s, --str <string>    
+    -h, --help            Prints help information
+    -V, --version         Prints version information
+
+ARGS
+    <bar>        about bar arg
+    [baz]        
+    [rest]...    about rest args"
+`;
+
+snapshot[`snapshot help (sub) 1`] = `
+"program
+USAGE
+    program [OPTIONS] <SUBCOMMAND>
+
+OPTIONS
+    -s, --str <string>    
+
+COMMANDS
+    hoge    "
+`;
