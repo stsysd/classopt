@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: denoland/setup-deno@main
         with:
-          deno-version: "1.27.0"
+          deno-version: "1.41.2"
       - name: Run fmt
         run: |
           deno fmt --check
