@@ -1,6 +1,7 @@
-import { Command, Flag, Help, Opt, Version } from "../mod.ts";
+import { Command, Flag, Help, Name, Opt, Version } from "../mod.ts";
 
 @Help("example of how to use `Opt`")
+@Name("program")
 @Version("0.0.0")
 class Program extends Command {
   @Flag({ about: "boolean option" })
@@ -17,7 +18,7 @@ class Program extends Command {
     type: "string",
     multiple: true,
   })
-  multiple = [];
+  multiple!: string[];
 
   @Opt({ about: "enable short key", short: true })
   short1 = "";
@@ -35,7 +36,7 @@ class Program extends Command {
   @Opt({ about: "specify long key", long: "long-key" })
   long2 = "";
 
-  async execute() {
+  execute() {
     console.log(`--flag = ${this.flag}`);
     console.log(`--str = ${this.str}`);
     console.log(`--num = ${this.num}`);
@@ -44,7 +45,6 @@ class Program extends Command {
     console.log(`-S, --short2 = ${this.short2}`);
     console.log(`-L = ${this.long1}`);
     console.log(`--long-key = ${this.long2}`);
-    await void 0; // avoid `requrie-await`
   }
 }
 

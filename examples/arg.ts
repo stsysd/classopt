@@ -1,6 +1,7 @@
-import { Arg, Command, Help, Version } from "../mod.ts";
+import { Arg, Command, Help, Name, Version } from "../mod.ts";
 
 @Help("example of how to use `Arg`")
+@Name("program")
 @Version("0.0.0")
 class Program extends Command {
   @Arg({ about: "required argument" })
@@ -17,11 +18,10 @@ class Program extends Command {
   // @Arg({ about: "required argument after optional" })
   // invalid!: string;
 
-  async execute() {
+  execute() {
     console.log(`<req> = ${this.req}`);
     console.log(`[opt] = ${this.opt}`);
     console.log(`<named> = ${this.str}`);
-    await void 0; // avoid `requrie-await`
   }
 }
 
