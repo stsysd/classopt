@@ -5,9 +5,8 @@ class List extends Command {
   @Flag({ about: "Prints full path" })
   fullPath = false;
 
-  async execute() {
+  execute() {
     console.log(`List.fullPath = ${this.fullPath}`);
-    await void 0; // avoid `requrie-await`
   }
 }
 
@@ -17,25 +16,24 @@ class GetCommand extends Command {
   @Arg({ about: "Specify path to get" })
   path!: string;
 
-  async execute() {
+  execute() {
     console.log(`GetCommand.path = ${this.path}`);
-    await void 0; // avoid `requrie-await`
   }
 }
 
+@Name("main")
 @Version("0.0.0")
 @Help("Help Text for Top Command")
 class Program extends Command {
   @Cmd(List, GetCommand)
   command?: Command;
 
-  async execute() {
+  execute() {
     if (this.command == null) {
       console.log(this.help());
     } else {
       this.command?.execute();
     }
-    await void 0; // avoid `requrie-await`
   }
 }
 

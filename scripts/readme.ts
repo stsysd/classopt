@@ -1,7 +1,7 @@
 import {
   dirname,
   fromFileUrl,
-} from "https://deno.land/std@0.119.0/path/mod.ts";
+} from "https://deno.land/std@0.214.0/path/mod.ts";
 
 const dir = dirname(fromFileUrl(import.meta.url));
 
@@ -19,21 +19,22 @@ async function embedCommands(cmds: string[], sh = "bash"): Promise<string> {
 }
 
 async function _embedCommand(cmd: string, sh = "bash"): Promise<string> {
-  const p = Deno.run({
-    cmd: [sh, "-c", `cd ${dir}/..; ${cmd}`],
+  const command = new Deno.Command(sh, {
+    args: ["-c", `cd ${dir}/..; ${cmd}`],
     stderr: "piped",
     stdout: "piped",
   });
+  const p = command.spawn();
 
-  const { code } = await p.status();
+  const { code } = await p.status;
   if (code !== 0) {
-    const rawError = await p.stderrOutput();
-    const msg = new TextDecoder().decode(rawError);
-    console.error(msg);
+    const { stderr } = await p.output();
+    const msg = new TextDecoder().decode(stderr);
+    console.error("stderr:", msg);
     throw new Error(`fail to command: ${cmd}`);
   } else {
-    const rawOutput = await p.output();
-    const result = new TextDecoder().decode(rawOutput);
+    const { stdout } = await p.output();
+    const result = new TextDecoder().decode(stdout);
     return `$ ${cmd}\n${result.trimEnd()}`;
   }
 }

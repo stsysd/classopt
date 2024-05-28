@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: denoland/setup-deno@main
         with:
-          deno-version: "1.27.0"
+          deno-version: "1.41.2"
       - name: Run fmt
         run: |
           deno fmt --check
@@ -23,12 +23,13 @@ jobs:
           diff README.md <(deno run --allow-run --allow-read=examples scripts/readme.ts)
       - name: Run tests
         run: |
-          deno test --unstable --coverage=coverage
+          deno test -A --coverage=coverage
       - name: Create coverage report
         run: |
           deno coverage ./coverage --lcov > coverage.lcov
       - name: Codecov
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.lcov
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
