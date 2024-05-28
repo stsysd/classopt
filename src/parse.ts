@@ -292,7 +292,7 @@ export function parse<T extends object>(
 function initWithMetadata(ctx: ParseContext) {
   for (const opt of ctx.optMap.values()) {
     if (opt.multiple) {
-      ctx.instance[opt.prop] = [];
+      ctx.instance[opt.prop] ??= [];
     }
   }
 
